@@ -556,7 +556,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, query, where, onSnapshot, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   // ── FIREBASE CONFIG ──
   const firebaseConfig = {
@@ -645,15 +645,16 @@
     if(unsubscribe) unsubscribe();
     const q = query(
       collection(db,'transactions'),
-      where('uid','==',currentUser.uid),
-      orderBy('date','desc')
+      where('uid','==',currentUser.uid)
     );
     unsubscribe = onSnapshot(q, snap => {
-      allTransactions = snap.docs.map(d => ({id:d.id,...d.data()}));
+      allTransactions = snap.docs
+        .map(d => ({id:d.id,...d.data()}))
+        .sort((a,b) => b.date.localeCompare(a.date));
       renderDashboard();
     }, err => {
       console.error(err);
-      showToast('Error loading data');
+      showToast('Error: ' + err.message);
     });
   }
 
@@ -863,7 +864,11 @@
     document.getElementById('descInput').value = '';
     document.getElementById('catSelect').value = 'Food & Drinks';
     document.getElementById('paySelect').value = 'Cash';
-    document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth()+1).padStart(2,'0');
+    const dd = String(today.getDate()).padStart(2,'0');
+    document.getElementById('dateInput').value = yyyy+'-'+mm+'-'+dd;
     document.getElementById('noteInput').value = '';
     showScreen('addScreen');
   }
