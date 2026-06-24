@@ -136,7 +136,7 @@
   .form-field:last-child{border-bottom:none}
   .field-icon{width:34px;height:34px;border-radius:9px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
   .field-label{font-size:12px;color:var(--text3);font-weight:500;margin-bottom:2px}
-  .field-input{font-size:15px;font-weight:500;border:none;background:transparent;color:var(--text);width:100%;outline:none;font-family:var(--font)}
+  .field-input{font-size:15px;font-weight:500;border:none;background:transparent;color:var(--text);width:100%;outline:none;font-family:var(--font);text-align:left;-webkit-appearance:none;appearance:none}
   .field-select{font-size:15px;font-weight:500;border:none;background:transparent;color:var(--text);width:100%;outline:none;font-family:var(--font);-webkit-appearance:none;cursor:pointer}
   .field-select option{background:var(--surface);color:var(--text)}
 
@@ -365,7 +365,7 @@
         <div class="field-icon">📅</div>
         <div style="flex:1">
           <div class="field-label">Date</div>
-          <input class="field-input" id="dateInput" type="date"/>
+          <input class="field-input" id="dateInput" type="date" style="-webkit-appearance:none;appearance:none;text-align:left;display:block;width:100%"/>
         </div>
       </div>
       <div class="form-field">
