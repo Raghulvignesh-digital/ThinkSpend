@@ -365,7 +365,29 @@
         <div class="field-icon">📅</div>
         <div style="flex:1">
           <div class="field-label">Date</div>
-          <input class="field-input" id="dateInput" type="date" style="-webkit-appearance:none;appearance:none;text-align:left;display:block;width:100%"/>
+          <div style="display:flex;gap:8px;width:100%">
+            <select class="field-select" id="dateDay" style="flex:1;min-width:0"></select>
+            <select class="field-select" id="dateMonth" style="flex:1.5;min-width:0">
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+            <select class="field-select" id="dateYear" style="flex:1.2;min-width:0">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="form-field">
@@ -664,7 +686,9 @@
     const desc = document.getElementById('descInput').value.trim();
     const cat = document.getElementById('catSelect').value;
     const pay = document.getElementById('paySelect').value;
-    const date = document.getElementById('dateInput').value;
+    const date = document.getElementById('dateYear').value + '-' +
+                  document.getElementById('dateMonth').value + '-' +
+                  document.getElementById('dateDay').value;
     const note = document.getElementById('noteInput').value.trim();
 
     if(!amt || amt <= 0) { showToast('Enter a valid amount'); return; }
@@ -832,7 +856,12 @@
     document.getElementById('descInput').value = t.description;
     document.getElementById('catSelect').value = t.category;
     document.getElementById('paySelect').value = t.paymentMethod;
-    document.getElementById('dateInput').value = t.date;
+    populateDays();
+    const dp = t.date.split('-');
+    document.getElementById('dateYear').value = dp[0];
+    document.getElementById('dateMonth').value = dp[1];
+    populateDays();
+    document.getElementById('dateDay').value = dp[2];
     document.getElementById('noteInput').value = t.note||'';
     showScreen('addScreen');
   }
@@ -868,7 +897,10 @@
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth()+1).padStart(2,'0');
     const dd = String(today.getDate()).padStart(2,'0');
-    document.getElementById('dateInput').value = yyyy+'-'+mm+'-'+dd;
+    document.getElementById('dateMonth').value = mm;
+    document.getElementById('dateYear').value = yyyy;
+    populateDays();
+    document.getElementById('dateDay').value = dd;
     document.getElementById('noteInput').value = '';
     showScreen('addScreen');
   }
@@ -965,6 +997,25 @@
 
   // Init
   showScreen('dashScreen');
+
+  function populateDays() {
+    const day = document.getElementById('dateDay');
+    const month = document.getElementById('dateMonth').value;
+    const year = document.getElementById('dateYear').value;
+    const max = new Date(year, month, 0).getDate();
+    const current = parseInt(day.value) || new Date().getDate();
+    day.innerHTML = '';
+    for(let i=1; i<=max; i++){
+      const o = document.createElement('option');
+      o.value = String(i).padStart(2,'0');
+      o.textContent = String(i).padStart(2,'0');
+      day.appendChild(o);
+    }
+    day.value = String(Math.min(current, max)).padStart(2,'0');
+  }
+  document.addEventListener('change', e => {
+    if(e.target.id==='dateMonth'||e.target.id==='dateYear') populateDays();
+  });
 </script>
 </body>
 </html>
