@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#ffffff"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>SyncSpend</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#f5f5f5;--surface:#ffffff;--surface2:#f0f0f0;
+    --text:#111111;--text2:#666666;--text3:#999999;
+    --border:#e0e0e0;--accent:#111111;--accent-text:#ffffff;
+    --danger:#e53935;--radius:16px;--radius-sm:10px;
+    --font:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;
+      --text:#f0f0f0;--text2:#aaaaaa;--text3:#666666;
+      --border:#333333;--accent:#f0f0f0;--accent-text:#111111;
+    }
+  }
+  html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden}
+  #app{height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden;max-width:430px;margin:0 auto;background:var(--bg)}
+
+  /* SCREENS */
+  .screen{position:absolute;inset:0;background:var(--bg);overflow-y:auto;overflow-x:hidden;transition:transform 0.32s cubic-bezier(.4,0,.2,1),opacity 0.32s;will-change:transform;padding-bottom:24px}
+  .screen.hidden{transform:translateX(100%);pointer-events:none;opacity:0}
+  .screen.slide-up{transform:translateY(100%)}
+  .screen.slide-up.hidden{transform:translateY(100%);opacity:1}
+  .screen:not(.hidden){transform:translateX(0);opacity:1}
+
+  /* TOPBAR */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:56px 20px 16px;background:var(--bg);position:sticky;top:0;z-index:10}
+  .topbar-icons{display:flex;gap:4px}
+  .icon-btn{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;flex-shrink:0}
+  .icon-btn:active{background:var(--surface2)}
+  .icon-btn svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .acct-btn{display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--border);border-radius:24px;padding:8px 14px;cursor:pointer;font-size:15px;font-weight:600;color:var(--text);transition:background 0.15s}
+  .acct-btn:active{background:var(--surface2)}
+  .acct-btn svg{width:14px;height:14px;stroke:var(--text2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* SUMMARY CARD */
+  .summary-card{margin:0 16px;background:var(--surface);border-radius:var(--radius);padding:20px;border:1px solid var(--border)}
+  .summary-label{font-size:13px;color:var(--text2);font-weight:500;margin-bottom:4px}
+  .summary-amount{font-size:38px;font-weight:700;letter-spacing:-1.5px;color:var(--text);margin-bottom:20px;line-height:1}
+
+  /* CHART */
+  .chart-wrap{height:120px;position:relative}
+  .chart-svg{width:100%;height:100%}
+  .chart-line{stroke:var(--border);stroke-width:0.5;stroke-dasharray:none}
+  .chart-label{font-size:11px;fill:var(--text3);font-family:var(--font)}
+  .chart-bar{fill:var(--text);rx:4}
+  .chart-bar-empty{fill:var(--surface2);rx:4}
+
+  /* SECTION */
+  .section-title{font-size:13px;font-weight:600;color:var(--text2);padding:20px 20px 10px;letter-spacing:0.3px;text-transform:uppercase}
+
+  /* TRANSACTION LIST */
+  .txn-list{background:var(--surface);border-radius:var(--radius);margin:0 16px;border:1px solid var(--border);overflow:hidden}
+  .txn-item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+  .txn-item:last-child{border-bottom:none}
+  .txn-item:active{background:var(--surface2)}
+  .txn-icon{width:40px;height:40px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+  .txn-info{flex:1;min-width:0}
+  .txn-name{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .txn-date{font-size:12px;color:var(--text3);margin-top:1px}
+  .txn-amount{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap}
+  .empty-state{padding:40px 20px;text-align:center;color:var(--text3);font-size:14px}
+
+  /* FAB */
+  .fab{position:fixed;bottom:32px;right:50%;transform:translateX(calc(50% - 16px + min(50vw,215px) - 52px));width:56px;height:56px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;z-index:50}
+  .fab:active{transform:translateX(calc(50% - 16px + min(50vw,215px) - 52px)) scale(0.92)}
+  .fab svg{width:28px;height:28px;stroke:var(--accent-text);fill:none;stroke-width:2.2;stroke-linecap:round}
+
+  /* FILTER POPOVER */
+  .popover-backdrop{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.1)}
+  .popover{position:absolute;top:110px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-width:220px;z-index:100;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.12)}
+  .popover.hidden{display:none}
+  .popover-item{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s}
+  .popover-item:last-child{border-bottom:none}
+  .popover-item:active{background:var(--surface2)}
+  .popover-item-icon{width:32px;height:32px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .popover-item-icon svg{width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .popover-item-info{flex:1}
+  .popover-item-label{font-size:14px;font-weight:600;color:var(--text)}
+  .popover-item-value{font-size:12px;color:var(--text3)}
+  .popover-item-arrow{width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* SUBMENU */
+  .submenu-screen{position:fixed;inset:0;z-index:110;background:var(--bg);transform:translateX(100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+  .submenu-screen.open{transform:translateX(0)}
+  .submenu-header{display:flex;align-items:center;gap:12px;padding:56px 20px 16px;background:var(--bg);position:sticky;top:0}
+  .back-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .back-btn svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .submenu-title{font-size:17px;font-weight:700;color:var(--text)}
+  .option-list{background:var(--surface);border-radius:var(--radius);margin:0 16px;border:1px solid var(--border);overflow:hidden}
+  .option-item{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;font-size:15px;color:var(--text)}
+  .option-item:last-child{border-bottom:none}
+  .option-item:active{background:var(--surface2)}
+  .option-item.selected{font-weight:600}
+  .check-icon{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+  /* BOTTOM SHEET */
+  .sheet-backdrop{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.35);opacity:0;transition:opacity 0.3s;pointer-events:none}
+  .sheet-backdrop.open{opacity:1;pointer-events:all}
+  .sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:430px;background:var(--surface);border-radius:24px 24px 0 0;z-index:130;transition:transform 0.32s cubic-bezier(.4,0,.2,1);padding:12px 0 40px}
+  .sheet.open{transform:translateX(-50%) translateY(0)}
+  .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+  .sheet-title{font-size:16px;font-weight:700;color:var(--text);text-align:center;padding-bottom:12px;border-bottom:1px solid var(--border);margin:0 16px 8px}
+  .sheet-item{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;transition:background 0.1s}
+  .sheet-item:active{background:var(--surface2)}
+  .sheet-item-icon{width:40px;height:40px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+  .sheet-item-info{flex:1}
+  .sheet-item-label{font-size:15px;font-weight:600;color:var(--text)}
+  .sheet-item-sub{font-size:12px;color:var(--text3);margin-top:1px}
+  .sheet-item-arrow svg{width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ADD FORM SCREEN */
+  .form-screen{background:var(--bg)}
+  .form-topbar{display:flex;align-items:center;justify-content:space-between;padding:56px 20px 20px;background:var(--bg);position:sticky;top:0;z-index:10}
+  .form-title{font-size:17px;font-weight:700;color:var(--text)}
+  .save-btn{background:var(--accent);color:var(--accent-text);border:none;border-radius:20px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity 0.15s}
+  .save-btn:active{opacity:0.75}
+  .save-btn:disabled{opacity:0.35;cursor:not-allowed}
+  .form-amount-section{background:var(--surface);margin:0 16px;border-radius:var(--radius);padding:24px;border:1px solid var(--border);margin-bottom:12px}
+  .amount-label{font-size:12px;color:var(--text3);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+  .amount-input-wrap{display:flex;align-items:baseline;gap:4px}
+  .currency-sym{font-size:28px;font-weight:700;color:var(--text2)}
+  .amount-input{font-size:42px;font-weight:700;border:none;background:transparent;color:var(--text);width:100%;outline:none;font-family:var(--font);letter-spacing:-1px;-webkit-appearance:none}
+  .amount-input::placeholder{color:var(--border)}
+  .form-section{background:var(--surface);margin:0 16px;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
+  .form-field{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .form-field:last-child{border-bottom:none}
+  .field-icon{width:34px;height:34px;border-radius:9px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
+  .field-label{font-size:12px;color:var(--text3);font-weight:500;margin-bottom:2px}
+  .field-input{font-size:15px;font-weight:500;border:none;background:transparent;color:var(--text);width:100%;outline:none;font-family:var(--font)}
+  .field-select{font-size:15px;font-weight:500;border:none;background:transparent;color:var(--text);width:100%;outline:none;font-family:var(--font);-webkit-appearance:none;cursor:pointer}
+  .field-select option{background:var(--surface);color:var(--text)}
+
+  /* SETTINGS SCREEN */
+  .settings-screen{background:var(--bg)}
+  .settings-topbar{display:flex;align-items:center;gap:12px;padding:56px 20px 16px;background:var(--bg);position:sticky;top:0;z-index:10}
+  .settings-heading{font-size:17px;font-weight:700;color:var(--text);flex:1;text-align:center}
+  .close-btn{width:36px;height:36px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;flex-shrink:0}
+  .close-btn svg{width:18px;height:18px;stroke:var(--text2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .settings-profile{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin:0 16px 20px;padding:16px;cursor:pointer}
+  .profile-avatar{width:48px;height:48px;border-radius:50%;background:var(--text);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--accent-text);flex-shrink:0;overflow:hidden}
+  .profile-avatar img{width:100%;height:100%;object-fit:cover}
+  .profile-info{flex:1}
+  .profile-name{font-size:16px;font-weight:700;color:var(--text)}
+  .profile-sub{font-size:12px;color:var(--text3)}
+  .settings-group-label{font-size:12px;font-weight:600;color:var(--text3);padding:0 20px 8px;text-transform:uppercase;letter-spacing:0.5px}
+  .settings-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin:0 16px 20px;overflow:hidden}
+  .settings-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+  .settings-row:last-child{border-bottom:none}
+  .settings-row:active{background:var(--surface2)}
+  .settings-row-icon{width:34px;height:34px;border-radius:9px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
+  .settings-row-label{flex:1;font-size:15px;font-weight:500;color:var(--text)}
+  .settings-row-value{font-size:14px;color:var(--text3)}
+  .settings-row-arrow{display:flex;align-items:center}
+  .settings-row-arrow svg{width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .toggle{width:44px;height:26px;border-radius:13px;background:var(--surface2);position:relative;cursor:pointer;transition:background 0.2s;border:1.5px solid var(--border);flex-shrink:0}
+  .toggle.on{background:var(--accent);border-color:var(--accent)}
+  .toggle-knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+  .toggle.on .toggle-knob{transform:translateX(18px)}
+
+  /* BRANDING */
+  .app-branding{display:flex;flex-direction:column;align-items:center;padding:32px 0 0;gap:6px}
+  .app-logo{width:48px;height:48px;border-radius:14px;background:var(--text);display:flex;align-items:center;justify-content:center}
+  .app-logo svg{width:28px;height:28px;stroke:var(--accent-text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .app-name{font-size:14px;font-weight:600;color:var(--text3)}
+  .app-version{font-size:12px;color:var(--text3)}
+
+  /* LOGIN SCREEN */
+  .login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;z-index:200;padding:40px 32px}
+  .login-logo{width:72px;height:72px;border-radius:20px;background:var(--text);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+  .login-logo svg{width:40px;height:40px;stroke:var(--accent-text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .login-title{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-0.8px;text-align:center;margin-bottom:8px}
+  .login-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:48px;line-height:1.5}
+  .google-btn{display:flex;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 24px;font-size:16px;font-weight:600;color:var(--text);cursor:pointer;font-family:var(--font);transition:background 0.15s;width:100%;justify-content:center}
+  .google-btn:active{background:var(--surface2)}
+  .google-btn img{width:22px;height:22px}
+  .login-note{font-size:11px;color:var(--text3);text-align:center;margin-top:16px;line-height:1.5}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--accent-text);border-radius:24px;padding:10px 20px;font-size:13px;font-weight:500;z-index:500;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* LOADER */
+  .loader{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:300}
+  .spinner{width:32px;height:32px;border:2.5px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* OFFLINE BADGE */
+  .offline-badge{background:#f5a623;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;text-align:center;display:none}
+  .offline-badge.show{display:block}
+
+  /* FILTER ACTIVE DOT */
+  .filter-dot{width:8px;height:8px;border-radius:50%;background:#e53935;position:absolute;top:6px;right:6px}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader" id="loader">
+  <div class="spinner"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- OFFLINE BADGE -->
+<div class="offline-badge" id="offlineBadge">You're offline — changes saved locally</div>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen" style="display:none">
+  <div class="login-logo">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 3"/></svg>
+  </div>
+  <div class="login-title">SyncSpend</div>
+  <div class="login-sub">Track every rupee.<br/>Know where it goes.</div>
+  <button class="google-btn" onclick="signInWithGoogle()">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
+    Continue with Google
+  </button>
+  <div class="login-note">Your data syncs securely across all your devices</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+
+  <!-- DASHBOARD SCREEN -->
+  <div class="screen" id="dashScreen">
+    <div class="offline-badge" id="offlineBadge2"></div>
+    <div class="topbar">
+      <button class="acct-btn" id="acctBtn" onclick="openAccountSheet()">
+        <span id="acctName">Raghul</span>
+        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
+      </button>
+      <div class="topbar-icons">
+        <button class="icon-btn" onclick="openSearch()" aria-label="Search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+        </button>
+        <div style="position:relative">
+          <button class="icon-btn" id="filterBtn" onclick="toggleFilter()" aria-label="Filter">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          </button>
+          <div class="filter-dot" id="filterDot" style="display:none"></div>
+        </div>
+        <button class="icon-btn" onclick="openSettings()" aria-label="Settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- SUMMARY CARD -->
+    <div class="summary-card">
+      <div class="summary-label" id="summaryLabel">Spent all time</div>
+      <div class="summary-amount" id="summaryAmount">₹0.00</div>
+      <div class="chart-wrap">
+        <svg class="chart-svg" id="chartSvg" viewBox="0 0 320 100" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+
+    <!-- FILTER POPOVER -->
+    <div class="popover hidden" id="filterPopover">
+      <div class="popover-item" onclick="openSubmenu('period')">
+        <div class="popover-item-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="popover-item-info">
+          <div class="popover-item-label">Period</div>
+          <div class="popover-item-value" id="periodVal">All Time</div>
+        </div>
+        <svg class="popover-item-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="popover-item" onclick="openSubmenu('category')">
+        <div class="popover-item-icon">
+          <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        </div>
+        <div class="popover-item-info">
+          <div class="popover-item-label">Category</div>
+          <div class="popover-item-value" id="categoryVal">All</div>
+        </div>
+        <svg class="popover-item-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="popover-item" onclick="openSubmenu('payment')">
+        <div class="popover-item-icon">
+          <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <div class="popover-item-info">
+          <div class="popover-item-label">Payment Method</div>
+          <div class="popover-item-value" id="paymentVal">All</div>
+        </div>
+        <svg class="popover-item-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+
+    <div class="section-title">Latest</div>
+    <div class="txn-list" id="txnList">
+      <div class="empty-state" id="emptyState">No transactions yet.<br/>Tap + to add your first one.</div>
+    </div>
+  </div>
+
+  <!-- ADD TRANSACTION SCREEN -->
+  <div class="screen hidden form-screen" id="addScreen">
+    <div class="form-topbar">
+      <button class="icon-btn" onclick="closeAdd()" aria-label="Back">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <span class="form-title" id="formTitle">Add Transaction</span>
+      <button class="save-btn" id="saveBtn" onclick="saveTransaction()">Save</button>
+    </div>
+
+    <div class="form-amount-section">
+      <div class="amount-label">Amount</div>
+      <div class="amount-input-wrap">
+        <span class="currency-sym">₹</span>
+        <input class="amount-input" id="amtInput" type="number" inputmode="decimal" placeholder="0.00" min="0" step="0.01"/>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-field">
+        <div class="field-icon">📝</div>
+        <div style="flex:1">
+          <div class="field-label">Description</div>
+          <input class="field-input" id="descInput" type="text" placeholder="What did you spend on?" maxlength="60"/>
+        </div>
+      </div>
+      <div class="form-field">
+        <div class="field-icon">🏷️</div>
+        <div style="flex:1">
+          <div class="field-label">Category</div>
+          <select class="field-select" id="catSelect">
+            <option value="Food & Drinks">🍽️ Food &amp; Drinks</option>
+            <option value="Transportation">🚗 Transportation</option>
+            <option value="Shopping">🛍️ Shopping</option>
+            <option value="Entertainment">🎬 Entertainment</option>
+            <option value="Health">💊 Health</option>
+            <option value="Services">⚙️ Services</option>
+            <option value="Travel">✈️ Travel</option>
+            <option value="Others">📦 Others</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <div class="field-icon">💳</div>
+        <div style="flex:1">
+          <div class="field-label">Payment Method</div>
+          <select class="field-select" id="paySelect">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Debit Card">Debit Card</option>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="E-Wallet">E-Wallet</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <div class="field-icon">📅</div>
+        <div style="flex:1">
+          <div class="field-label">Date</div>
+          <input class="field-input" id="dateInput" type="date"/>
+        </div>
+      </div>
+      <div class="form-field">
+        <div class="field-icon">📝</div>
+        <div style="flex:1">
+          <div class="field-label">Note (optional)</div>
+          <input class="field-input" id="noteInput" type="text" placeholder="Add a note..." maxlength="100"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS SCREEN -->
+  <div class="screen hidden settings-screen" id="settingsScreen">
+    <div class="settings-topbar">
+      <button class="close-btn" onclick="closeSettings()" aria-label="Close">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="settings-heading">Settings</div>
+      <div style="width:36px"></div>
+    </div>
+
+    <div class="settings-profile" onclick="openProfileEdit()">
+      <div class="profile-avatar" id="settingsAvatar">R</div>
+      <div class="profile-info">
+        <div class="profile-name" id="settingsName">Raghul</div>
+        <div class="profile-sub">Account info, categories and payments</div>
+      </div>
+      <svg style="width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <div class="settings-group-label">Preferences</div>
+    <div class="settings-group">
+      <div class="settings-row">
+        <div class="settings-row-icon">💱</div>
+        <div class="settings-row-label">Currency</div>
+        <div class="settings-row-value">INR ₹</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">📅</div>
+        <div class="settings-row-label">Start Week On</div>
+        <div class="settings-row-value">Sunday</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row" onclick="toggleSmartSuggestions(this)">
+        <div class="settings-row-icon">✨</div>
+        <div class="settings-row-label">Smart Suggestions</div>
+        <div class="toggle on" id="suggToggle"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">⌨️</div>
+        <div class="settings-row-label">Shortcut</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="settings-group-label">Support</div>
+    <div class="settings-group">
+      <div class="settings-row">
+        <div class="settings-row-icon">📖</div>
+        <div class="settings-row-label">Tutorials</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">✦</div>
+        <div class="settings-row-label">What's New</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">💬</div>
+        <div class="settings-row-label">Help &amp; Feedback</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">👥</div>
+        <div class="settings-row-label">Follow Us</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="settings-group-label">Others</div>
+    <div class="settings-group">
+      <div class="settings-row">
+        <div class="settings-row-icon">🔒</div>
+        <div class="settings-row-label">Privacy Policy</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">📄</div>
+        <div class="settings-row-label">Terms of Service</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row" onclick="signOut()" style="color:var(--danger)">
+        <div class="settings-row-icon">🚪</div>
+        <div class="settings-row-label" style="color:var(--danger)">Sign Out</div>
+      </div>
+    </div>
+
+    <div class="app-branding">
+      <div class="app-logo">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2 2"/></svg>
+      </div>
+      <div class="app-name">SyncSpend</div>
+      <div class="app-version">v1.0.0</div>
+    </div>
+    <div style="height:40px"></div>
+  </div>
+
+  <!-- ACCOUNT BOTTOM SHEET -->
+  <div class="sheet-backdrop" id="acctBackdrop" onclick="closeAccountSheet()"></div>
+  <div class="sheet" id="acctSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add Account</div>
+    <div id="acctList"></div>
+    <div class="sheet-item" onclick="showToast('Coming soon!')">
+      <div class="sheet-item-icon">📱</div>
+      <div class="sheet-item-info">
+        <div class="sheet-item-label">Create new account</div>
+        <div class="sheet-item-sub">Add a separate spending tracker</div>
+      </div>
+      <div class="sheet-item-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>
+    <div style="padding:0 16px;margin-top:8px">
+      <button onclick="signOut()" style="width:100%;padding:14px;border-radius:12px;background:var(--surface2);border:none;font-size:15px;font-weight:600;color:var(--danger);cursor:pointer;font-family:var(--font)">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- SUBMENUS -->
+  <div class="submenu-screen" id="submenuPeriod">
+    <div class="submenu-header">
+      <button class="back-btn" onclick="closeSubmenu('period')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+      <div class="submenu-title">Period</div>
+    </div>
+    <div class="option-list">
+      <div class="option-item" onclick="selectFilter('period','Today')"><span>Today</span></div>
+      <div class="option-item" onclick="selectFilter('period','This Week')"><span>This Week</span></div>
+      <div class="option-item" onclick="selectFilter('period','This Month')"><span>This Month</span></div>
+      <div class="option-item" onclick="selectFilter('period','This Year')"><span>This Year</span></div>
+      <div class="option-item selected" id="periodOpt_All Time" onclick="selectFilter('period','All Time')">
+        <span>All Time</span>
+        <svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="submenu-screen" id="submenuCategory">
+    <div class="submenu-header">
+      <button class="back-btn" onclick="closeSubmenu('category')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+      <div class="submenu-title">Category</div>
+    </div>
+    <div class="option-list">
+      <div class="option-item selected" id="catOpt_All" onclick="selectFilter('category','All')"><span>All</span><svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="option-item" onclick="selectFilter('category','Entertainment')"><span>🎬 Entertainment</span></div>
+      <div class="option-item" onclick="selectFilter('category','Food & Drinks')"><span>🍽️ Food &amp; Drinks</span></div>
+      <div class="option-item" onclick="selectFilter('category','Health')"><span>💊 Health</span></div>
+      <div class="option-item" onclick="selectFilter('category','Services')"><span>⚙️ Services</span></div>
+      <div class="option-item" onclick="selectFilter('category','Shopping')"><span>🛍️ Shopping</span></div>
+      <div class="option-item" onclick="selectFilter('category','Transportation')"><span>🚗 Transportation</span></div>
+      <div class="option-item" onclick="selectFilter('category','Travel')"><span>✈️ Travel</span></div>
+      <div class="option-item" onclick="selectFilter('category','Others')"><span>📦 Others</span></div>
+    </div>
+  </div>
+
+  <div class="submenu-screen" id="submenuPayment">
+    <div class="submenu-header">
+      <button class="back-btn" onclick="closeSubmenu('payment')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+      <div class="submenu-title">Payment Method</div>
+    </div>
+    <div class="option-list">
+      <div class="option-item selected" id="payOpt_All" onclick="selectFilter('payment','All')"><span>All</span><svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="option-item" onclick="selectFilter('payment','Cash')"><span>💵 Cash</span></div>
+      <div class="option-item" onclick="selectFilter('payment','UPI')"><span>📲 UPI</span></div>
+      <div class="option-item" onclick="selectFilter('payment','Debit Card')"><span>💳 Debit Card</span></div>
+      <div class="option-item" onclick="selectFilter('payment','Credit Card')"><span>💳 Credit Card</span></div>
+      <div class="option-item" onclick="selectFilter('payment','Bank Transfer')"><span>🏦 Bank Transfer</span></div>
+      <div class="option-item" onclick="selectFilter('payment','E-Wallet')"><span>👛 E-Wallet</span></div>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="openAdd()" aria-label="Add transaction">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  // ── FIREBASE CONFIG ── Replace with your own project config ──
+  // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBwN9B1kZFQLM2C3WfLnsyIFBiJiD41gh8",
+  authDomain: "syncspend-8dc1b.firebaseapp.com",
+  projectId: "syncspend-8dc1b",
+  storageBucket: "syncspend-8dc1b.firebasestorage.app",
+  messagingSenderId: "482444372282",
+  appId: "1:482444372282:web:dd1ef9295f7d8f1b1cc803"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let currentUser = null;
+  let allTransactions = [];
+  let unsubscribe = null;
+  let editingId = null;
+
+  const filters = { period: 'All Time', category: 'All', payment: 'All' };
+
+  // ── CATEGORY ICONS ──
+  const catIcons = {
+    'Food & Drinks':'🍽️','Transportation':'🚗','Shopping':'🛍️',
+    'Entertainment':'🎬','Health':'💊','Services':'⚙️','Travel':'✈️','Others':'📦'
+  };
+
+  // ── AUTH ──
+  window.signInWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      if(e.code !== 'auth/popup-closed-by-user') showToast('Sign in failed');
+    }
+  };
+
+  window.signOut = async () => {
+    closeAccountSheet();
+    if(unsubscribe) unsubscribe();
+    await fbSignOut(auth);
+  };
+
+  onAuthStateChanged(auth, user => {
+    document.getElementById('loader').style.display = 'none';
+    if(user) {
+      currentUser = user;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      const name = user.displayName?.split(' ')[0] || 'Me';
+      document.getElementById('acctName').textContent = name;
+      document.getElementById('settingsName').textContent = user.displayName || name;
+      const av = document.getElementById('settingsAvatar');
+      if(user.photoURL) {
+        av.innerHTML = `<img src="${user.photoURL}" alt="${name}"/>`;
+      } else {
+        av.textContent = name[0].toUpperCase();
+      }
+      buildAccountSheet(user);
+      listenTransactions();
+    } else {
+      currentUser = null;
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+      allTransactions = [];
+    }
+  });
+
+  function buildAccountSheet(user) {
+    const name = user.displayName?.split(' ')[0] || 'Me';
+    document.getElementById('acctList').innerHTML = `
+      <div class="sheet-item" style="border-bottom:1px solid var(--border)">
+        <div class="sheet-item-icon" style="font-size:16px;font-weight:700;background:var(--text);color:var(--accent-text)">${name[0]?.toUpperCase()}</div>
+        <div class="sheet-item-info">
+          <div class="sheet-item-label">${user.displayName || name}</div>
+          <div class="sheet-item-sub">${user.email}</div>
+        </div>
+        <svg style="width:18px;height:18px;stroke:#3bb54a;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>`;
+  }
+
+  // ── FIRESTORE ──
+  function listenTransactions() {
+    if(!currentUser) return;
+    if(unsubscribe) unsubscribe();
+    const q = query(
+      collection(db,'transactions'),
+      where('uid','==',currentUser.uid),
+      orderBy('date','desc')
+    );
+    unsubscribe = onSnapshot(q, snap => {
+      allTransactions = snap.docs.map(d => ({id:d.id,...d.data()}));
+      renderDashboard();
+    }, err => {
+      console.error(err);
+      showToast('Error loading data');
+    });
+  }
+
+  // ── SAVE TRANSACTION ──
+  window.saveTransaction = async () => {
+    const amt = parseFloat(document.getElementById('amtInput').value);
+    const desc = document.getElementById('descInput').value.trim();
+    const cat = document.getElementById('catSelect').value;
+    const pay = document.getElementById('paySelect').value;
+    const date = document.getElementById('dateInput').value;
+    const note = document.getElementById('noteInput').value.trim();
+
+    if(!amt || amt <= 0) { showToast('Enter a valid amount'); return; }
+    if(!desc) { showToast('Add a description'); return; }
+    if(!date) { showToast('Select a date'); return; }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      const data = { uid: currentUser.uid, amount: amt, description: desc, category: cat, paymentMethod: pay, date, note, createdAt: serverTimestamp() };
+      if(editingId) {
+        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').then(({updateDoc,doc:fdoc})=>updateDoc(fdoc(db,'transactions',editingId),data));
+        showToast('Transaction updated');
+      } else {
+        await addDoc(collection(db,'transactions'), data);
+        showToast('Transaction saved ✓');
+      }
+      closeAdd();
+    } catch(e) {
+      showToast('Failed to save');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Save';
+  };
+
+  // ── DELETE ──
+  window.deleteTxn = async (id) => {
+    if(!confirm('Delete this transaction?')) return;
+    try {
+      await deleteDoc(doc(db,'transactions',id));
+      showToast('Deleted');
+    } catch(e) { showToast('Error deleting'); }
+  };
+
+  // ── FILTER LOGIC ──
+  function filterTransactions() {
+    const now = new Date();
+    return allTransactions.filter(t => {
+      const d = new Date(t.date);
+      if(filters.period === 'Today') {
+        if(d.toDateString() !== now.toDateString()) return false;
+      } else if(filters.period === 'This Week') {
+        const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
+        if(d < startOfWeek) return false;
+      } else if(filters.period === 'This Month') {
+        if(d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+      } else if(filters.period === 'This Year') {
+        if(d.getFullYear() !== now.getFullYear()) return false;
+      }
+      if(filters.category !== 'All' && t.category !== filters.category) return false;
+      if(filters.payment !== 'All' && t.paymentMethod !== filters.payment) return false;
+      return true;
+    });
+  }
+
+  // ── RENDER DASHBOARD ──
+  function renderDashboard() {
+    const txns = filterTransactions();
+    const total = txns.reduce((s,t) => s + t.amount, 0);
+    document.getElementById('summaryAmount').textContent = '₹' + total.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    const periodLabels = {
+      'Today':'Spent today','This Week':'Spent this week',
+      'This Month':'Spent this month','This Year':'Spent this year','All Time':'Spent all time'
+    };
+    document.getElementById('summaryLabel').textContent = periodLabels[filters.period] || 'Spent all time';
+
+    renderChart(txns);
+
+    const list = document.getElementById('txnList');
+    const empty = document.getElementById('emptyState');
+    if(txns.length === 0) {
+      list.innerHTML = '';
+      list.appendChild(empty);
+      empty.style.display = 'block';
+      return;
+    }
+    list.innerHTML = '';
+    txns.slice(0,20).forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'txn-item';
+      el.innerHTML = `
+        <div class="txn-icon">${catIcons[t.category]||'📦'}</div>
+        <div class="txn-info">
+          <div class="txn-name">${escHtml(t.description)}</div>
+          <div class="txn-date">${formatDate(t.date)} · ${escHtml(t.paymentMethod)}</div>
+        </div>
+        <div class="txn-amount">₹${t.amount.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`;
+      el.addEventListener('click', () => openEditMenu(t));
+      list.appendChild(el);
+    });
+  }
+
+  function renderChart(txns) {
+    const svg = document.getElementById('chartSvg');
+    const W=320,H=80,paddingBottom=20,barW=28;
+    let groups;
+    if(filters.period === 'Today' || filters.period === 'This Week') {
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      groups = days.map((d,i) => ({ label:d, val: txns.filter(t => new Date(t.date).getDay()===i).reduce((s,t)=>s+t.amount,0) }));
+    } else if(filters.period === 'This Month') {
+      const weeks = ['W1','W2','W3','W4','W5'];
+      groups = weeks.map((w,i) => ({ label:w, val: txns.filter(t => { const day=new Date(t.date).getDate(); return Math.floor((day-1)/7)===i; }).reduce((s,t)=>s+t.amount,0) }));
+    } else if(filters.period === 'This Year') {
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      groups = months.map((m,i) => ({ label:m, val: txns.filter(t => new Date(t.date).getMonth()===i).reduce((s,t)=>s+t.amount,0) }));
+    } else {
+      const yearMap = {};
+      txns.forEach(t => { const y=new Date(t.date).getFullYear(); yearMap[y]=(yearMap[y]||0)+t.amount; });
+      const now = new Date().getFullYear();
+      const years = [now-3,now-2,now-1,now];
+      groups = years.map(y => ({ label:String(y), val: yearMap[y]||0 }));
+    }
+
+    const maxVal = Math.max(...groups.map(g=>g.val),1);
+    const n = groups.length;
+    const chartW = W-40;
+    const step = chartW/n;
+    let lines = '';
+    [0,0.25,0.5,0.75,1].forEach((_,i) => {
+      const y = 4+(H-paddingBottom)*i/(4);
+      const labelVal = Math.round(maxVal*(1-i/4));
+      lines += `<line class="chart-line" x1="32" x2="${W}" y1="${y}" y2="${y}"/>`;
+      lines += `<text class="chart-label" x="28" y="${y+3}" text-anchor="end">${labelVal>=1000?(labelVal/1000).toFixed(1)+'k':labelVal}</text>`;
+    });
+    let bars = '';
+    groups.forEach((g,i) => {
+      const bx = 36+i*step+(step-barW)/2;
+      const bh = Math.max(g.val/maxVal*(H-paddingBottom-4),g.val>0?3:0);
+      const by = 4+(H-paddingBottom)-bh;
+      bars += `<rect x="${bx}" y="${by}" width="${barW}" height="${bh}" rx="4" fill="${g.val>0?'var(--text)':'var(--surface2)'}"/>`;
+      bars += `<text class="chart-label" x="${bx+barW/2}" y="${H}" text-anchor="middle">${g.label}</text>`;
+    });
+    svg.innerHTML = lines+bars;
+  }
+
+  // ── EDIT MENU ──
+  function openEditMenu(t) {
+    const actions = [
+      { label:'Edit', fn: () => openEdit(t) },
+      { label:'Delete', fn: () => deleteTxn(t.id), danger: true }
+    ];
+    // simple confirm menu as bottom sheet overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;justify-content:flex-end';
+    overlay.innerHTML = `
+      <div onclick="this.parentElement.remove()" style="flex:1;background:rgba(0,0,0,0.25)"></div>
+      <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:12px 0 40px">
+        <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px"></div>
+        <div style="padding:0 16px 8px;font-size:13px;font-weight:600;color:var(--text3)">${escHtml(t.description)}</div>
+        <div id="editEdit" style="padding:14px 20px;font-size:15px;font-weight:600;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border)">Edit</div>
+        <div id="editDel" style="padding:14px 20px;font-size:15px;font-weight:600;color:var(--danger);cursor:pointer">Delete</div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#editEdit').onclick = () => { overlay.remove(); openEdit(t); };
+    overlay.querySelector('#editDel').onclick = () => { overlay.remove(); deleteTxn(t.id); };
+  }
+
+  function openEdit(t) {
+    editingId = t.id;
+    document.getElementById('formTitle').textContent = 'Edit Transaction';
+    document.getElementById('amtInput').value = t.amount;
+    document.getElementById('descInput').value = t.description;
+    document.getElementById('catSelect').value = t.category;
+    document.getElementById('paySelect').value = t.paymentMethod;
+    document.getElementById('dateInput').value = t.date;
+    document.getElementById('noteInput').value = t.note||'';
+    showScreen('addScreen');
+  }
+
+  // ── EXPOSE GLOBALS ──
+  window.renderDashboard = renderDashboard;
+  window.filters = filters;
+
+  // ── OFFLINE ──
+  window.addEventListener('offline', () => { document.getElementById('offlineBadge2').textContent = 'Offline — changes will sync when connected'; document.getElementById('offlineBadge2').style.display = 'block'; });
+  window.addEventListener('online', () => { document.getElementById('offlineBadge2').style.display = 'none'; });
+</script>
+
+<script>
+  // ── SCREEN MANAGEMENT ──
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    const el = document.getElementById(id);
+    el.classList.remove('hidden');
+    el.scrollTop = 0;
+    const isFab = id === 'dashScreen';
+    document.getElementById('fab').style.display = isFab ? 'flex' : 'none';
+  }
+
+  function openAdd() {
+    editingId = null;
+    document.getElementById('formTitle').textContent = 'Add Transaction';
+    document.getElementById('amtInput').value = '';
+    document.getElementById('descInput').value = '';
+    document.getElementById('catSelect').value = 'Food & Drinks';
+    document.getElementById('paySelect').value = 'Cash';
+    document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+    document.getElementById('noteInput').value = '';
+    showScreen('addScreen');
+  }
+
+  function closeAdd() { showScreen('dashScreen'); }
+  function openSettings() { showScreen('settingsScreen'); }
+  function closeSettings() { showScreen('dashScreen'); }
+
+  // ── FILTER POPOVER ──
+  let filterOpen = false;
+  function toggleFilter() {
+    filterOpen = !filterOpen;
+    document.getElementById('filterPopover').classList.toggle('hidden', !filterOpen);
+  }
+  document.addEventListener('click', e => {
+    if(filterOpen && !e.target.closest('#filterBtn') && !e.target.closest('#filterPopover')) {
+      filterOpen = false;
+      document.getElementById('filterPopover').classList.add('hidden');
+    }
+  });
+
+  // ── SUBMENUS ──
+  function openSubmenu(type) {
+    filterOpen = false;
+    document.getElementById('filterPopover').classList.add('hidden');
+    document.getElementById('submenu'+cap(type)).classList.add('open');
+  }
+  function closeSubmenu(type) {
+    document.getElementById('submenu'+cap(type)).classList.remove('open');
+  }
+  function cap(s){ return s[0].toUpperCase()+s.slice(1); }
+
+  function selectFilter(type, value) {
+    const old = window.filters[type];
+    const keyMap = { period:'periodOpt_', category:'catOpt_', payment:'payOpt_' };
+    if(old !== 'All Time' && old !== 'All') {
+      const oldEl = document.getElementById(keyMap[type]+old);
+      if(oldEl) { oldEl.classList.remove('selected'); oldEl.querySelector('svg')?.remove(); }
+    } else {
+      const allEl = document.getElementById(keyMap[type]+(type==='period'?'All Time':'All'));
+      if(allEl) { allEl.classList.remove('selected'); allEl.querySelector('svg')?.remove(); }
+    }
+    window.filters[type] = value;
+    const newEl = document.getElementById(keyMap[type]+value);
+    if(newEl) {
+      newEl.classList.add('selected');
+      if(!newEl.querySelector('svg')) newEl.innerHTML += '<svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+    }
+    const valEls = { period:'periodVal', category:'categoryVal', payment:'paymentVal' };
+    document.getElementById(valEls[type]).textContent = value;
+
+    const hasFilter = window.filters.period !== 'All Time' || window.filters.category !== 'All' || window.filters.payment !== 'All';
+    document.getElementById('filterDot').style.display = hasFilter ? 'block' : 'none';
+
+    closeSubmenu(type);
+    if(window.renderDashboard) window.renderDashboard();
+  }
+
+  // ── ACCOUNT SHEET ──
+  function openAccountSheet() {
+    document.getElementById('acctBackdrop').classList.add('open');
+    document.getElementById('acctSheet').classList.add('open');
+  }
+  function closeAccountSheet() {
+    document.getElementById('acctBackdrop').classList.remove('open');
+    document.getElementById('acctSheet').classList.remove('open');
+  }
+
+  // ── SEARCH (stub) ──
+  function openSearch() { showToast('Search coming soon'); }
+
+  // ── SETTINGS TOGGLE ──
+  function toggleSmartSuggestions(row) {
+    const t = document.getElementById('suggToggle');
+    t.classList.toggle('on');
+  }
+  function openProfileEdit() { showToast('Profile editing coming soon'); }
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+  window.showToast = showToast;
+
+  // ── UTILS ──
+  function formatDate(str) {
+    const d = new Date(str+'T00:00:00');
+    return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  }
+  function escHtml(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+  // Init
+  showScreen('dashScreen');
+</script>
+</body>
+</html>
