@@ -200,6 +200,36 @@
 
   /* FILTER ACTIVE DOT */
   .filter-dot{width:8px;height:8px;border-radius:50%;background:#e53935;position:absolute;top:6px;right:6px}
+
+  /* PROFILE EDIT SCREEN */
+  .profile-screen{background:var(--bg)}
+  .profile-topbar{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--bg);position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border)}
+  .profile-heading{font-size:17px;font-weight:700;color:var(--text);flex:1;text-align:center}
+  .profile-hero{display:flex;flex-direction:column;align-items:center;padding:28px 20px 20px;gap:10px}
+  .profile-avatar-large{width:82px;height:82px;border-radius:50%;background:var(--text);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:var(--accent-text);overflow:hidden;position:relative;cursor:pointer;flex-shrink:0}
+  .profile-avatar-large img{width:100%;height:100%;object-fit:cover}
+  .avatar-edit-badge{position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+  .avatar-edit-badge svg{width:13px;height:13px;stroke:var(--accent-text);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .profile-edit-name{font-size:13px;color:var(--text2);font-weight:500}
+  .profile-section-label{font-size:12px;font-weight:600;color:var(--text3);padding:0 20px 8px;text-transform:uppercase;letter-spacing:0.5px}
+  .profile-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin:0 16px 20px;overflow:hidden}
+  .profile-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .profile-row:last-child{border-bottom:none}
+  .profile-row-icon{width:34px;height:34px;border-radius:9px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
+  .profile-row-content{flex:1;min-width:0}
+  .profile-row-label{font-size:12px;color:var(--text3);font-weight:500;margin-bottom:3px}
+  .profile-row-input{font-size:15px;font-weight:500;border:none;background:transparent;color:var(--text);width:100%;outline:none;font-family:var(--font)}
+  .profile-row-input:disabled{color:var(--text3)}
+  .profile-row-select{font-size:15px;font-weight:500;border:none;background:transparent;color:var(--text);width:100%;outline:none;font-family:var(--font);-webkit-appearance:none;cursor:pointer}
+  .profile-row-value{font-size:15px;font-weight:500;color:var(--text3)}
+  .budget-input-wrap{display:flex;align-items:center;gap:4px}
+  .budget-sym{font-size:15px;font-weight:600;color:var(--text2)}
+  .profile-save-btn{display:block;width:calc(100% - 32px);margin:4px 16px 32px;padding:16px;background:var(--accent);color:var(--accent-text);border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:var(--font);transition:opacity 0.15s}
+  .profile-save-btn:active{opacity:0.75}
+  .stats-row{display:flex;gap:10px;margin:0 16px 20px}
+  .stat-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 12px;text-align:center}
+  .stat-value{font-size:18px;font-weight:700;color:var(--text)}
+  .stat-label{font-size:11px;color:var(--text3);margin-top:2px}
 </style>
 </head>
 <body>
@@ -365,29 +395,7 @@
         <div class="field-icon">📅</div>
         <div style="flex:1">
           <div class="field-label">Date</div>
-          <div style="display:flex;gap:8px;width:100%">
-            <select class="field-select" id="dateDay" style="flex:1;min-width:0"></select>
-            <select class="field-select" id="dateMonth" style="flex:1.5;min-width:0">
-              <option value="01">January</option>
-              <option value="02">February</option>
-              <option value="03">March</option>
-              <option value="04">April</option>
-              <option value="05">May</option>
-              <option value="06">June</option>
-              <option value="07">July</option>
-              <option value="08">August</option>
-              <option value="09">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-            <select class="field-select" id="dateYear" style="flex:1.2;min-width:0">
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-            </select>
-          </div>
+          <input class="field-input" id="dateInput" type="date" style="-webkit-appearance:none;appearance:none;text-align:left;display:block;width:100%"/>
         </div>
       </div>
       <div class="form-field">
@@ -568,6 +576,153 @@
     </div>
   </div>
 
+
+  <!-- PROFILE EDIT SCREEN -->
+  <div class="screen hidden profile-screen" id="profileScreen">
+    <div class="profile-topbar">
+      <button class="close-btn" onclick="closeProfileEdit()" aria-label="Back">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="profile-heading">Edit Profile</div>
+      <div style="width:36px"></div>
+    </div>
+
+    <!-- AVATAR -->
+    <div class="profile-hero">
+      <div class="profile-avatar-large" id="profileAvatarLarge" onclick="triggerAvatarUpload()">
+        R
+        <div class="avatar-edit-badge">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
+      <div class="profile-edit-name">Tap to change photo</div>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarChange(event)"/>
+    </div>
+
+    <!-- ACCOUNT STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="statTxnCount">0</div>
+        <div class="stat-label">Transactions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statTotalSpent">₹0</div>
+        <div class="stat-label">Total Spent</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statThisMonth">₹0</div>
+        <div class="stat-label">This Month</div>
+      </div>
+    </div>
+
+    <!-- BASIC INFO -->
+    <div class="profile-section-label">Basic Info</div>
+    <div class="profile-group">
+      <div class="profile-row">
+        <div class="profile-row-icon">👤</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">Display Name</div>
+          <input class="profile-row-input" id="profileName" type="text" placeholder="Your name" maxlength="30"/>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-row-icon">📧</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">Email</div>
+          <input class="profile-row-input" id="profileEmail" type="email" disabled/>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUDGET SETTINGS -->
+    <div class="profile-section-label">Budget Settings</div>
+    <div class="profile-group">
+      <div class="profile-row">
+        <div class="profile-row-icon">📅</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">Monthly Budget</div>
+          <div class="budget-input-wrap">
+            <span class="budget-sym">₹</span>
+            <input class="profile-row-input" id="monthlyBudget" type="number" placeholder="0.00" inputmode="decimal" min="0"/>
+          </div>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-row-icon">📆</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">Weekly Budget</div>
+          <div class="budget-input-wrap">
+            <span class="budget-sym">₹</span>
+            <input class="profile-row-input" id="weeklyBudget" type="number" placeholder="0.00" inputmode="decimal" min="0"/>
+          </div>
+        </div>
+      </div>
+      <div class="profile-row" onclick="toggleBudgetAlert()" style="cursor:pointer">
+        <div class="profile-row-icon">🔔</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">Budget Alert</div>
+          <div class="profile-row-value">Alert at 80% spent</div>
+        </div>
+        <div class="toggle on" id="budgetAlertToggle"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+
+    <!-- DISPLAY SETTINGS -->
+    <div class="profile-section-label">Display Settings</div>
+    <div class="profile-group">
+      <div class="profile-row">
+        <div class="profile-row-icon">🎨</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">App Theme</div>
+          <select class="profile-row-select" id="profileTheme">
+            <option value="system">System Default</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-row-icon">📅</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">Date Format</div>
+          <select class="profile-row-select" id="profileDateFormat">
+            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+          </select>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-row-icon">💱</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">Default Currency</div>
+          <select class="profile-row-select" id="profileCurrency">
+            <option value="INR">₹ INR — Indian Rupee</option>
+            <option value="USD">$ USD — US Dollar</option>
+            <option value="EUR">€ EUR — Euro</option>
+            <option value="GBP">£ GBP — British Pound</option>
+          </select>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-row-icon">💳</div>
+        <div class="profile-row-content">
+          <div class="profile-row-label">Default Payment Method</div>
+          <select class="profile-row-select" id="profileDefaultPay">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Debit Card">Debit Card</option>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="E-Wallet">E-Wallet</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="profile-save-btn" onclick="saveProfile()">Save Changes</button>
+  </div>
+
   <!-- FAB -->
   <button class="fab" id="fab" onclick="openAdd()" aria-label="Add transaction">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -626,7 +781,7 @@
   onAuthStateChanged(auth, user => {
     document.getElementById('loader').style.display = 'none';
     if(user) {
-      currentUser = user;
+      currentUser = window._currentUser = user;
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       const name = user.displayName?.split(' ')[0] || 'Me';
@@ -670,7 +825,7 @@
       where('uid','==',currentUser.uid)
     );
     unsubscribe = onSnapshot(q, snap => {
-      allTransactions = snap.docs
+      allTransactions = window._allTransactions = snap.docs
         .map(d => ({id:d.id,...d.data()}))
         .sort((a,b) => b.date.localeCompare(a.date));
       renderDashboard();
@@ -686,9 +841,7 @@
     const desc = document.getElementById('descInput').value.trim();
     const cat = document.getElementById('catSelect').value;
     const pay = document.getElementById('paySelect').value;
-    const date = document.getElementById('dateYear').value + '-' +
-                  document.getElementById('dateMonth').value + '-' +
-                  document.getElementById('dateDay').value;
+    const date = document.getElementById('dateInput').value;
     const note = document.getElementById('noteInput').value.trim();
 
     if(!amt || amt <= 0) { showToast('Enter a valid amount'); return; }
@@ -856,18 +1009,15 @@
     document.getElementById('descInput').value = t.description;
     document.getElementById('catSelect').value = t.category;
     document.getElementById('paySelect').value = t.paymentMethod;
-    populateDays();
-    const dp = t.date.split('-');
-    document.getElementById('dateYear').value = dp[0];
-    document.getElementById('dateMonth').value = dp[1];
-    populateDays();
-    document.getElementById('dateDay').value = dp[2];
+    document.getElementById('dateInput').value = t.date;
     document.getElementById('noteInput').value = t.note||'';
     showScreen('addScreen');
   }
 
   // ── EXPOSE GLOBALS ──
   window.renderDashboard = renderDashboard;
+  window._allTransactions = allTransactions;
+  window._currentUser = currentUser;
   window.filters = filters;
 
   // ── OFFLINE ──
@@ -897,10 +1047,7 @@
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth()+1).padStart(2,'0');
     const dd = String(today.getDate()).padStart(2,'0');
-    document.getElementById('dateMonth').value = mm;
-    document.getElementById('dateYear').value = yyyy;
-    populateDays();
-    document.getElementById('dateDay').value = dd;
+    document.getElementById('dateInput').value = yyyy+'-'+mm+'-'+dd;
     document.getElementById('noteInput').value = '';
     showScreen('addScreen');
   }
@@ -977,7 +1124,125 @@
     const t = document.getElementById('suggToggle');
     t.classList.toggle('on');
   }
-  function openProfileEdit() { showToast('Profile editing coming soon'); }
+  function openProfileEdit() {
+    // Fill in current data
+    const user = window._currentUser;
+    if(!user) return;
+    document.getElementById('profileName').value = user.displayName || '';
+    document.getElementById('profileEmail').value = user.email || '';
+
+    // Avatar
+    const avLarge = document.getElementById('profileAvatarLarge');
+    if(user.photoURL) {
+      avLarge.innerHTML = `<img src="${user.photoURL}" alt="avatar"/><div class="avatar-edit-badge"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>`;
+    } else {
+      const n = user.displayName || 'U';
+      avLarge.innerHTML = `${n[0].toUpperCase()}<div class="avatar-edit-badge"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>`;
+    }
+
+    // Load saved prefs from localStorage
+    const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
+    document.getElementById('monthlyBudget').value = prefs.monthlyBudget || '';
+    document.getElementById('weeklyBudget').value = prefs.weeklyBudget || '';
+    document.getElementById('profileTheme').value = prefs.theme || 'system';
+    document.getElementById('profileDateFormat').value = prefs.dateFormat || 'DD/MM/YYYY';
+    document.getElementById('profileCurrency').value = prefs.currency || 'INR';
+    document.getElementById('profileDefaultPay').value = prefs.defaultPay || 'Cash';
+    const alertToggle = document.getElementById('budgetAlertToggle');
+    if(prefs.budgetAlert === false) alertToggle.classList.remove('on');
+    else alertToggle.classList.add('on');
+
+    // Stats
+    const txns = window._allTransactions || [];
+    document.getElementById('statTxnCount').textContent = txns.length;
+    const total = txns.reduce((s,t) => s+t.amount, 0);
+    document.getElementById('statTotalSpent').textContent = '₹' + (total>=1000?(total/1000).toFixed(1)+'k':total.toFixed(0));
+    const now = new Date();
+    const thisMonth = txns.filter(t => {
+      const d = new Date(t.date);
+      return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    }).reduce((s,t)=>s+t.amount,0);
+    document.getElementById('statThisMonth').textContent = '₹' + (thisMonth>=1000?(thisMonth/1000).toFixed(1)+'k':thisMonth.toFixed(0));
+
+    showScreen('profileScreen');
+  }
+
+  function closeProfileEdit() { showScreen('settingsScreen'); }
+
+  function triggerAvatarUpload() {
+    document.getElementById('avatarFileInput').click();
+  }
+
+  function handleAvatarChange(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const avLarge = document.getElementById('profileAvatarLarge');
+      avLarge.innerHTML = `<img src="${e.target.result}" alt="avatar"/><div class="avatar-edit-badge"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>`;
+      // Also update settings avatar
+      const av = document.getElementById('settingsAvatar');
+      av.innerHTML = `<img src="${e.target.result}" alt="avatar"/>`;
+      localStorage.setItem('thinkspend_avatar', e.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function toggleBudgetAlert() {
+    document.getElementById('budgetAlertToggle').classList.toggle('on');
+  }
+
+  function saveProfile() {
+    const name = document.getElementById('profileName').value.trim();
+    if(!name) { showToast('Enter your name'); return; }
+
+    const prefs = {
+      monthlyBudget: parseFloat(document.getElementById('monthlyBudget').value) || 0,
+      weeklyBudget: parseFloat(document.getElementById('weeklyBudget').value) || 0,
+      budgetAlert: document.getElementById('budgetAlertToggle').classList.contains('on'),
+      theme: document.getElementById('profileTheme').value,
+      dateFormat: document.getElementById('profileDateFormat').value,
+      currency: document.getElementById('profileCurrency').value,
+      defaultPay: document.getElementById('profileDefaultPay').value,
+    };
+    localStorage.setItem('thinkspend_prefs', JSON.stringify(prefs));
+
+    // Update display name in UI
+    document.getElementById('acctName').textContent = name.split(' ')[0];
+    document.getElementById('settingsName').textContent = name;
+
+    // Apply theme
+    applyTheme(prefs.theme);
+
+    showToast('Profile saved ✓');
+    closeProfileEdit();
+  }
+
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    if(theme === 'light') {
+      root.style.setProperty('color-scheme','light');
+    } else if(theme === 'dark') {
+      root.style.setProperty('color-scheme','dark');
+    } else {
+      root.style.removeProperty('color-scheme');
+    }
+  }
+
+  // Load saved avatar on startup
+  (function loadSavedAvatar() {
+    const saved = localStorage.getItem('thinkspend_avatar');
+    if(saved) {
+      const av = document.getElementById('settingsAvatar');
+      if(av) av.innerHTML = `<img src="${saved}" alt="avatar"/>`;
+    }
+    const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
+    if(prefs.theme) applyTheme(prefs.theme);
+    if(prefs.defaultPay) {
+      const ps = document.getElementById('paySelect');
+      if(ps) ps.value = prefs.defaultPay;
+    }
+  })();
 
   // ── TOAST ──
   function showToast(msg) {
@@ -997,25 +1262,6 @@
 
   // Init
   showScreen('dashScreen');
-
-  function populateDays() {
-    const day = document.getElementById('dateDay');
-    const month = document.getElementById('dateMonth').value;
-    const year = document.getElementById('dateYear').value;
-    const max = new Date(year, month, 0).getDate();
-    const current = parseInt(day.value) || new Date().getDate();
-    day.innerHTML = '';
-    for(let i=1; i<=max; i++){
-      const o = document.createElement('option');
-      o.value = String(i).padStart(2,'0');
-      o.textContent = String(i).padStart(2,'0');
-      day.appendChild(o);
-    }
-    day.value = String(Math.min(current, max)).padStart(2,'0');
-  }
-  document.addEventListener('change', e => {
-    if(e.target.id==='dateMonth'||e.target.id==='dateYear') populateDays();
-  });
 </script>
 </body>
 </html>
