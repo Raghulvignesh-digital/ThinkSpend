@@ -17,21 +17,21 @@
     --font:'Inter',system-ui,-apple-system,sans-serif;
   }
   @media(prefers-color-scheme:dark){
-   [data-theme="light"]{
-  --bg:#f5f5f5;--surface:#ffffff;--surface2:#f0f0f0;
-  --text:#111111;--text2:#666666;--text3:#999999;
-  --border:#e0e0e0;--accent:#111111;--accent-text:#ffffff;
-}
-[data-theme="dark"]{
-  --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;
-  --text:#f0f0f0;--text2:#aaaaaa;--text3:#666666;
-  --border:#333333;--accent:#f0f0f0;--accent-text:#111111;
-}
-    :root{
+    :root:not([data-theme="light"]){
       --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;
       --text:#f0f0f0;--text2:#aaaaaa;--text3:#666666;
       --border:#333333;--accent:#f0f0f0;--accent-text:#111111;
     }
+  }
+  [data-theme="light"]{
+    --bg:#f5f5f5;--surface:#ffffff;--surface2:#f0f0f0;
+    --text:#111111;--text2:#666666;--text3:#999999;
+    --border:#e0e0e0;--accent:#111111;--accent-text:#ffffff;
+  }
+  [data-theme="dark"]{
+    --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;
+    --text:#f0f0f0;--text2:#aaaaaa;--text3:#666666;
+    --border:#333333;--accent:#f0f0f0;--accent-text:#111111;
   }
   html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden}
   #app{height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden;max-width:430px;margin:0 auto;background:var(--bg)}
@@ -1258,25 +1258,25 @@
 }
 
   // Load saved avatar on startup
-  (function loadSavedAvatar() {
+  window.addEventListener('DOMContentLoaded', function() {
     const saved = localStorage.getItem('thinkspend_avatar');
     if(saved) {
       const av = document.getElementById('settingsAvatar');
       if(av) av.innerHTML = `<img src="${saved}" alt="avatar"/>`;
     }
     const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
-if(prefs.theme) applyTheme(prefs.theme);
-if(prefs.defaultPay) {
-  const ps = document.getElementById('paySelect');
-  if(ps) ps.value = prefs.defaultPay;
-}
-if(prefs.displayName) {
-  const an = document.getElementById('acctName');
-  const sn = document.getElementById('settingsName');
-  if(an) an.textContent = prefs.displayName.split(' ')[0];
-  if(sn) sn.textContent = prefs.displayName;
-}
-  })();
+    if(prefs.theme) applyTheme(prefs.theme);
+    if(prefs.defaultPay) {
+      const ps = document.getElementById('paySelect');
+      if(ps) ps.value = prefs.defaultPay;
+    }
+    if(prefs.displayName) {
+      const an = document.getElementById('acctName');
+      const sn = document.getElementById('settingsName');
+      if(an) an.textContent = prefs.displayName.split(' ')[0];
+      if(sn) sn.textContent = prefs.displayName;
+    }
+  });
 
   // ── TOAST ──
   function showToast(msg) {
