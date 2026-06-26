@@ -1128,7 +1128,9 @@
     // Fill in current data
     const user = window._currentUser;
     if(!user) return;
-    document.getElementById('profileName').value = user.displayName || '';
+    // Load saved prefs first
+    const savedPrefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
+    document.getElementById('profileName').value = savedPrefs.displayName || user.displayName || '';
     document.getElementById('profileEmail').value = user.email || '';
 
     // Avatar
@@ -1141,15 +1143,14 @@
     }
 
     // Load saved prefs from localStorage
-    const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
-    document.getElementById('monthlyBudget').value = prefs.monthlyBudget || '';
-    document.getElementById('weeklyBudget').value = prefs.weeklyBudget || '';
-    document.getElementById('profileTheme').value = prefs.theme || 'system';
-    document.getElementById('profileDateFormat').value = prefs.dateFormat || 'DD/MM/YYYY';
-    document.getElementById('profileCurrency').value = prefs.currency || 'INR';
-    document.getElementById('profileDefaultPay').value = prefs.defaultPay || 'Cash';
+    document.getElementById('monthlyBudget').value = savedPrefs.monthlyBudget || '';
+    document.getElementById('weeklyBudget').value = savedPrefs.weeklyBudget || '';
+    document.getElementById('profileTheme').value = savedPrefs.theme || 'system';
+    document.getElementById('profileDateFormat').value = savedPrefs.dateFormat || 'DD/MM/YYYY';
+    document.getElementById('profileCurrency').value = savedPrefs.currency || 'INR';
+    document.getElementById('profileDefaultPay').value = savedPrefs.defaultPay || 'Cash';
     const alertToggle = document.getElementById('budgetAlertToggle');
-    if(prefs.budgetAlert === false) alertToggle.classList.remove('on');
+    if(savedPrefs.budgetAlert === false) alertToggle.classList.remove('on');
     else alertToggle.classList.add('on');
 
     // Stats
@@ -1196,7 +1197,10 @@
     const name = document.getElementById('profileName').value.trim();
     if(!name) { showToast('Enter your name'); return; }
 
+    const existing = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
     const prefs = {
+      ...existing,
+      displayName: name,
       monthlyBudget: parseFloat(document.getElementById('monthlyBudget').value) || 0,
       weeklyBudget: parseFloat(document.getElementById('weeklyBudget').value) || 0,
       budgetAlert: document.getElementById('budgetAlertToggle').classList.contains('on'),
@@ -1205,7 +1209,6 @@
       currency: document.getElementById('profileCurrency').value,
       defaultPay: document.getElementById('profileDefaultPay').value,
     };
-   prefs.displayName = name;
     localStorage.setItem('thinkspend_prefs', JSON.stringify(prefs));
 
     // Update display name in UI
