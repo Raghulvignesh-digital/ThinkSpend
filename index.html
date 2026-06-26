@@ -455,52 +455,24 @@
       <svg style="width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>
 
-    <div class="settings-group-label">Preferences</div>
+    <div class="settings-group-label">Display</div>
     <div class="settings-group">
-      <div class="settings-row">
+      <div class="settings-row" onclick="openProfileEdit()">
+        <div class="settings-row-icon">🎨</div>
+        <div class="settings-row-label">Theme</div>
+        <div class="settings-row-value" id="settingsThemeVal">System</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row" onclick="openProfileEdit()">
         <div class="settings-row-icon">💱</div>
         <div class="settings-row-label">Currency</div>
-        <div class="settings-row-value">INR ₹</div>
+        <div class="settings-row-value" id="settingsCurrencyVal">INR</div>
         <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
       </div>
-      <div class="settings-row">
+      <div class="settings-row" onclick="openProfileEdit()">
         <div class="settings-row-icon">📅</div>
-        <div class="settings-row-label">Start Week On</div>
-        <div class="settings-row-value">Sunday</div>
-        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
-      </div>
-      <div class="settings-row" onclick="toggleSmartSuggestions(this)">
-        <div class="settings-row-icon">✨</div>
-        <div class="settings-row-label">Smart Suggestions</div>
-        <div class="toggle on" id="suggToggle"><div class="toggle-knob"></div></div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-icon">⌨️</div>
-        <div class="settings-row-label">Shortcut</div>
-        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
-      </div>
-    </div>
-
-    <div class="settings-group-label">Support</div>
-    <div class="settings-group">
-      <div class="settings-row">
-        <div class="settings-row-icon">📖</div>
-        <div class="settings-row-label">Tutorials</div>
-        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-icon">✦</div>
-        <div class="settings-row-label">What's New</div>
-        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-icon">💬</div>
-        <div class="settings-row-label">Help &amp; Feedback</div>
-        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-icon">👥</div>
-        <div class="settings-row-label">Follow Us</div>
+        <div class="settings-row-label">Date Format</div>
+        <div class="settings-row-value" id="settingsDateVal">DD/MM/YYYY</div>
         <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
       </div>
     </div>
@@ -1243,6 +1215,13 @@
     // Apply theme
     applyTheme(prefs.theme);
 
+   const tv = document.getElementById('settingsThemeVal');
+const cv = document.getElementById('settingsCurrencyVal');
+const dv = document.getElementById('settingsDateVal');
+if(tv) tv.textContent = prefs.theme === 'system' ? 'System' : prefs.theme === 'dark' ? 'Dark' : 'Light';
+if(cv) cv.textContent = prefs.currency || 'INR';
+if(dv) dv.textContent = prefs.dateFormat || 'DD/MM/YYYY';
+
     showToast('Profile saved ✓');
     closeProfileEdit();
   }
@@ -1276,6 +1255,12 @@
       if(an) an.textContent = prefs.displayName.split(' ')[0];
       if(sn) sn.textContent = prefs.displayName;
     }
+   const tv = document.getElementById('settingsThemeVal');
+    const cv = document.getElementById('settingsCurrencyVal');
+    const dv = document.getElementById('settingsDateVal');
+    if(tv) tv.textContent = prefs.theme === 'system' ? 'System' : prefs.theme === 'dark' ? 'Dark' : 'Light';
+    if(cv) cv.textContent = prefs.currency || 'INR';
+    if(dv) dv.textContent = prefs.dateFormat || 'DD/MM/YYYY'; 
   });
 
   // ── TOAST ──
