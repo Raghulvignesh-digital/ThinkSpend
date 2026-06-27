@@ -17,21 +17,21 @@
     --font:'Inter',system-ui,-apple-system,sans-serif;
   }
   @media(prefers-color-scheme:dark){
-    :root:not([data-theme="light"]){
+   [data-theme="light"]{
+  --bg:#f5f5f5;--surface:#ffffff;--surface2:#f0f0f0;
+  --text:#111111;--text2:#666666;--text3:#999999;
+  --border:#e0e0e0;--accent:#111111;--accent-text:#ffffff;
+}
+[data-theme="dark"]{
+  --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;
+  --text:#f0f0f0;--text2:#aaaaaa;--text3:#666666;
+  --border:#333333;--accent:#f0f0f0;--accent-text:#111111;
+}
+    :root{
       --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;
       --text:#f0f0f0;--text2:#aaaaaa;--text3:#666666;
       --border:#333333;--accent:#f0f0f0;--accent-text:#111111;
     }
-  }
-  [data-theme="light"]{
-    --bg:#f5f5f5;--surface:#ffffff;--surface2:#f0f0f0;
-    --text:#111111;--text2:#666666;--text3:#999999;
-    --border:#e0e0e0;--accent:#111111;--accent-text:#ffffff;
-  }
-  [data-theme="dark"]{
-    --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;
-    --text:#f0f0f0;--text2:#aaaaaa;--text3:#666666;
-    --border:#333333;--accent:#f0f0f0;--accent-text:#111111;
   }
   html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden}
   #app{height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden;max-width:430px;margin:0 auto;background:var(--bg)}
@@ -423,29 +423,7 @@
         <div class="field-icon">📅</div>
         <div style="flex:1">
           <div class="field-label">Date</div>
-          <div style="display:flex;gap:8px;width:100%">
-            <select class="field-select" id="dateDay" style="flex:1;min-width:0"></select>
-            <select class="field-select" id="dateMonth" style="flex:1.8;min-width:0">
-              <option value="01">January</option>
-              <option value="02">February</option>
-              <option value="03">March</option>
-              <option value="04">April</option>
-              <option value="05">May</option>
-              <option value="06">June</option>
-              <option value="07">July</option>
-              <option value="08">August</option>
-              <option value="09">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-            <select class="field-select" id="dateYear" style="flex:1.2;min-width:0">
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-            </select>
-          </div>
+          <input class="field-input" id="dateInput" type="date" style="-webkit-appearance:none;appearance:none;text-align:left;display:block;width:100%"/>
         </div>
       </div>
       <div class="form-field">
@@ -477,24 +455,52 @@
       <svg style="width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>
 
-    <div class="settings-group-label">Display</div>
+    <div class="settings-group-label">Preferences</div>
     <div class="settings-group">
-      <div class="settings-row" onclick="openProfileEdit()">
-        <div class="settings-row-icon">🎨</div>
-        <div class="settings-row-label">Theme</div>
-        <div class="settings-row-value" id="settingsThemeVal">System</div>
-        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
-      </div>
-      <div class="settings-row" onclick="openProfileEdit()">
+      <div class="settings-row">
         <div class="settings-row-icon">💱</div>
         <div class="settings-row-label">Currency</div>
-        <div class="settings-row-value" id="settingsCurrencyVal">INR</div>
+        <div class="settings-row-value">INR ₹</div>
         <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
       </div>
-      <div class="settings-row" onclick="openProfileEdit()">
+      <div class="settings-row">
         <div class="settings-row-icon">📅</div>
-        <div class="settings-row-label">Date Format</div>
-        <div class="settings-row-value" id="settingsDateVal">DD/MM/YYYY</div>
+        <div class="settings-row-label">Start Week On</div>
+        <div class="settings-row-value">Sunday</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row" onclick="toggleSmartSuggestions(this)">
+        <div class="settings-row-icon">✨</div>
+        <div class="settings-row-label">Smart Suggestions</div>
+        <div class="toggle on" id="suggToggle"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">⌨️</div>
+        <div class="settings-row-label">Shortcut</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="settings-group-label">Support</div>
+    <div class="settings-group">
+      <div class="settings-row">
+        <div class="settings-row-icon">📖</div>
+        <div class="settings-row-label">Tutorials</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">✦</div>
+        <div class="settings-row-label">What's New</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">💬</div>
+        <div class="settings-row-label">Help &amp; Feedback</div>
+        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-icon">👥</div>
+        <div class="settings-row-label">Follow Us</div>
         <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
       </div>
     </div>
@@ -863,10 +869,7 @@
     const desc = document.getElementById('descInput').value.trim();
     const cat = document.getElementById('catSelect').value;
     const pay = document.getElementById('paySelect').value;
-    const dd = document.getElementById('dateDay') ? document.getElementById('dateDay').value : '';
-    const dm = document.getElementById('dateMonth') ? document.getElementById('dateMonth').value : '';
-    const dy = document.getElementById('dateYear') ? document.getElementById('dateYear').value : '';
-    const date = (dy && dm && dd) ? `${dy}-${dm}-${dd}` : '';
+    const date = document.getElementById('dateInput').value;
     const note = document.getElementById('noteInput').value.trim();
 
     if(!amt || amt <= 0) { showToast('Enter a valid amount'); return; }
@@ -1034,11 +1037,7 @@
     document.getElementById('descInput').value = t.description;
     document.getElementById('catSelect').value = t.category;
     document.getElementById('paySelect').value = t.paymentMethod;
-    const dp = t.date ? t.date.split('-') : ['2026','06','01'];
-    document.getElementById('dateYear').value = dp[0];
-    document.getElementById('dateMonth').value = dp[1];
-    window.populateDays && window.populateDays();
-    document.getElementById('dateDay').value = dp[2];
+    document.getElementById('dateInput').value = t.date;
     document.getElementById('noteInput').value = t.note||'';
     showScreen('addScreen');
   }
@@ -1076,10 +1075,7 @@
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth()+1).padStart(2,'0');
     const dd = String(today.getDate()).padStart(2,'0');
-    document.getElementById('dateMonth').value = mm;
-    document.getElementById('dateYear').value = yyyy;
-    window.populateDays && window.populateDays();
-    document.getElementById('dateDay').value = dd;
+    document.getElementById('dateInput').value = yyyy+'-'+mm+'-'+dd;
     document.getElementById('noteInput').value = '';
     showScreen('addScreen');
   }
@@ -1160,9 +1156,7 @@
     // Fill in current data
     const user = window._currentUser;
     if(!user) return;
-    // Load saved prefs first
-    const savedPrefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
-    document.getElementById('profileName').value = savedPrefs.displayName || user.displayName || '';
+    document.getElementById('profileName').value = user.displayName || '';
     document.getElementById('profileEmail').value = user.email || '';
 
     // Avatar
@@ -1175,14 +1169,15 @@
     }
 
     // Load saved prefs from localStorage
-    document.getElementById('monthlyBudget').value = savedPrefs.monthlyBudget || '';
-    document.getElementById('weeklyBudget').value = savedPrefs.weeklyBudget || '';
-    document.getElementById('profileTheme').value = savedPrefs.theme || 'system';
-    document.getElementById('profileDateFormat').value = savedPrefs.dateFormat || 'DD/MM/YYYY';
-    document.getElementById('profileCurrency').value = savedPrefs.currency || 'INR';
-    document.getElementById('profileDefaultPay').value = savedPrefs.defaultPay || 'Cash';
+    const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
+    document.getElementById('monthlyBudget').value = prefs.monthlyBudget || '';
+    document.getElementById('weeklyBudget').value = prefs.weeklyBudget || '';
+    document.getElementById('profileTheme').value = prefs.theme || 'system';
+    document.getElementById('profileDateFormat').value = prefs.dateFormat || 'DD/MM/YYYY';
+    document.getElementById('profileCurrency').value = prefs.currency || 'INR';
+    document.getElementById('profileDefaultPay').value = prefs.defaultPay || 'Cash';
     const alertToggle = document.getElementById('budgetAlertToggle');
-    if(savedPrefs.budgetAlert === false) alertToggle.classList.remove('on');
+    if(prefs.budgetAlert === false) alertToggle.classList.remove('on');
     else alertToggle.classList.add('on');
 
     // Stats
@@ -1229,10 +1224,7 @@
     const name = document.getElementById('profileName').value.trim();
     if(!name) { showToast('Enter your name'); return; }
 
-    const existing = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
     const prefs = {
-      ...existing,
-      displayName: name,
       monthlyBudget: parseFloat(document.getElementById('monthlyBudget').value) || 0,
       weeklyBudget: parseFloat(document.getElementById('weeklyBudget').value) || 0,
       budgetAlert: document.getElementById('budgetAlertToggle').classList.contains('on'),
@@ -1241,6 +1233,7 @@
       currency: document.getElementById('profileCurrency').value,
       defaultPay: document.getElementById('profileDefaultPay').value,
     };
+   prefs.displayName = name;
     localStorage.setItem('thinkspend_prefs', JSON.stringify(prefs));
 
     // Update display name in UI
@@ -1249,13 +1242,6 @@
 
     // Apply theme
     applyTheme(prefs.theme);
-
-   const tv = document.getElementById('settingsThemeVal');
-const cv = document.getElementById('settingsCurrencyVal');
-const dv = document.getElementById('settingsDateVal');
-if(tv) tv.textContent = prefs.theme === 'system' ? 'System' : prefs.theme === 'dark' ? 'Dark' : 'Light';
-if(cv) cv.textContent = prefs.currency || 'INR';
-if(dv) dv.textContent = prefs.dateFormat || 'DD/MM/YYYY';
 
     showToast('Profile saved ✓');
     closeProfileEdit();
@@ -1272,53 +1258,27 @@ if(dv) dv.textContent = prefs.dateFormat || 'DD/MM/YYYY';
 }
 
   // Load saved avatar on startup
-  window.addEventListener('DOMContentLoaded', function() {
+  (function loadSavedAvatar() {
     const saved = localStorage.getItem('thinkspend_avatar');
     if(saved) {
       const av = document.getElementById('settingsAvatar');
       if(av) av.innerHTML = `<img src="${saved}" alt="avatar"/>`;
     }
     const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
-    if(prefs.theme) applyTheme(prefs.theme);
-    if(prefs.defaultPay) {
-      const ps = document.getElementById('paySelect');
-      if(ps) ps.value = prefs.defaultPay;
-    }
-    if(prefs.displayName) {
-      const an = document.getElementById('acctName');
-      const sn = document.getElementById('settingsName');
-      if(an) an.textContent = prefs.displayName.split(' ')[0];
-      if(sn) sn.textContent = prefs.displayName;
-    }
-   const tv = document.getElementById('settingsThemeVal');
-    const cv = document.getElementById('settingsCurrencyVal');
-    const dv = document.getElementById('settingsDateVal');
-    if(tv) tv.textContent = prefs.theme === 'system' ? 'System' : prefs.theme === 'dark' ? 'Dark' : 'Light';
-    if(cv) cv.textContent = prefs.currency || 'INR';
-    if(dv) dv.textContent = prefs.dateFormat || 'DD/MM/YYYY'; 
-  });
+if(prefs.theme) applyTheme(prefs.theme);
+if(prefs.defaultPay) {
+  const ps = document.getElementById('paySelect');
+  if(ps) ps.value = prefs.defaultPay;
+}
+if(prefs.displayName) {
+  const an = document.getElementById('acctName');
+  const sn = document.getElementById('settingsName');
+  if(an) an.textContent = prefs.displayName.split(' ')[0];
+  if(sn) sn.textContent = prefs.displayName;
+}
+  })();
 
-  window.populateDays = function() {
-    const day = document.getElementById('dateDay');
-    if(!day) return;
-    const month = document.getElementById('dateMonth').value;
-    const year = document.getElementById('dateYear').value;
-    const max = new Date(year, month, 0).getDate();
-    const current = parseInt(day.value) || new Date().getDate();
-    day.innerHTML = '';
-    for(let i=1; i<=max; i++){
-      const o = document.createElement('option');
-      o.value = String(i).padStart(2,'0');
-      o.textContent = String(i).padStart(2,'0');
-      day.appendChild(o);
-    }
-    day.value = String(Math.min(current, max)).padStart(2,'0');
-  };
-  document.addEventListener('change', e => {
-    if(e.target.id==='dateMonth'||e.target.id==='dateYear') window.populateDays && window.populateDays();
-  });
-
-    // ── TOAST ──
+  // ── TOAST ──
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
