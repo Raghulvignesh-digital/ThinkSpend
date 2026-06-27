@@ -447,26 +447,16 @@
 
     <div class="settings-group-label">Preferences</div>
     <div class="settings-group">
-      <div class="settings-row">
+      <div class="settings-row" onclick="openSubmenu('currency')">
         <div class="settings-row-icon">💱</div>
         <div class="settings-row-label">Currency</div>
-        <div class="settings-row-value">INR ₹</div>
+        <div class="settings-row-value" id="settingsCurrencyValue">INR ₹</div>
         <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
       </div>
-      <div class="settings-row">
+      <div class="settings-row" onclick="openSubmenu('weekStart')">
         <div class="settings-row-icon">📅</div>
         <div class="settings-row-label">Start Week On</div>
-        <div class="settings-row-value">Sunday</div>
-        <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
-      </div>
-      <div class="settings-row" onclick="toggleSmartSuggestions(this)">
-        <div class="settings-row-icon">✨</div>
-        <div class="settings-row-label">Smart Suggestions</div>
-        <div class="toggle on" id="suggToggle"><div class="toggle-knob"></div></div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-icon">⌨️</div>
-        <div class="settings-row-label">Shortcut</div>
+        <div class="settings-row-value" id="settingsWeekStartValue">Sunday</div>
         <div class="settings-row-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
       </div>
     </div>
@@ -1137,11 +1127,45 @@
   // ── SEARCH (stub) ──
   function openSearch() { showToast('Search coming soon'); }
 
-  // ── SETTINGS TOGGLE ──
-  function toggleSmartSuggestions(row) {
-    const t = document.getElementById('suggToggle');
-    t.classList.toggle('on');
+  // ── SETTINGS PREFERENCES ──
+  function selectPreference(type, value) {
+    const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
+    if(type === 'currency') {
+      prefs.currency = value;
+      const valueEl = document.getElementById('settingsCurrencyValue');
+      if(valueEl) {
+        valueEl.textContent = {
+          INR: 'INR ₹',
+          USD: 'USD $',
+          EUR: 'EUR €',
+          GBP: 'GBP £'
+        }[value] || value;
+      }
+      const profileCurrency = document.getElementById('profileCurrency');
+      if(profileCurrency) profileCurrency.value = value;
+    } else if(type === 'weekStart') {
+      prefs.weekStart = value;
+      const valueEl = document.getElementById('settingsWeekStartValue');
+      if(valueEl) valueEl.textContent = value;
+    }
+    localStorage.setItem('thinkspend_prefs', JSON.stringify(prefs));
+    closeSubmenu(type);
   }
+
+  function loadSettingsPreferences() {
+    const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
+    const currencyValue = prefs.currency || 'INR';
+    const currencyEl = document.getElementById('settingsCurrencyValue');
+    if(currencyEl) currencyEl.textContent = {
+      INR: 'INR ₹',
+      USD: 'USD $',
+      EUR: 'EUR €',
+      GBP: 'GBP £'
+    }[currencyValue] || currencyValue;
+    const weekStartEl = document.getElementById('settingsWeekStartValue');
+    if(weekStartEl) weekStartEl.textContent = prefs.weekStart || 'Sunday';
+  }
+
   function openProfileEdit() {
     // Fill in current data
     const user = window._currentUser;
