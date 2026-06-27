@@ -584,6 +584,35 @@
     </div>
   </div>
 
+  <div class="submenu-screen" id="submenuCurrency">
+    <div class="submenu-header">
+      <button class="back-btn" onclick="closeSubmenu('currency')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+      <div class="submenu-title">Currency</div>
+    </div>
+    <div class="option-list">
+      <div class="option-item" id="currencyOpt_INR" onclick="selectPreference('currency','INR')"><span>₹ INR — Indian Rupee</span></div>
+      <div class="option-item" id="currencyOpt_USD" onclick="selectPreference('currency','USD')"><span>$ USD — US Dollar</span></div>
+      <div class="option-item" id="currencyOpt_EUR" onclick="selectPreference('currency','EUR')"><span>€ EUR — Euro</span></div>
+      <div class="option-item" id="currencyOpt_GBP" onclick="selectPreference('currency','GBP')"><span>£ GBP — British Pound</span></div>
+    </div>
+  </div>
+
+  <div class="submenu-screen" id="submenuWeekStart">
+    <div class="submenu-header">
+      <button class="back-btn" onclick="closeSubmenu('weekStart')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+      <div class="submenu-title">Start Week On</div>
+    </div>
+    <div class="option-list">
+      <div class="option-item" id="weekStartOpt_Sunday" onclick="selectPreference('weekStart','Sunday')"><span>Sunday</span></div>
+      <div class="option-item" id="weekStartOpt_Monday" onclick="selectPreference('weekStart','Monday')"><span>Monday</span></div>
+      <div class="option-item" id="weekStartOpt_Tuesday" onclick="selectPreference('weekStart','Tuesday')"><span>Tuesday</span></div>
+      <div class="option-item" id="weekStartOpt_Wednesday" onclick="selectPreference('weekStart','Wednesday')"><span>Wednesday</span></div>
+      <div class="option-item" id="weekStartOpt_Thursday" onclick="selectPreference('weekStart','Thursday')"><span>Thursday</span></div>
+      <div class="option-item" id="weekStartOpt_Friday" onclick="selectPreference('weekStart','Friday')"><span>Friday</span></div>
+      <div class="option-item" id="weekStartOpt_Saturday" onclick="selectPreference('weekStart','Saturday')"><span>Saturday</span></div>
+    </div>
+  </div>
+
 
   <!-- PROFILE EDIT SCREEN -->
   <div class="screen hidden profile-screen" id="profileScreen">
@@ -1061,7 +1090,7 @@
   }
 
   function closeAdd() { showScreen('dashScreen'); }
-  function openSettings() { showScreen('settingsScreen'); }
+  function openSettings() { loadSettingsPreferences(); showScreen('settingsScreen'); }
   function closeSettings() { showScreen('dashScreen'); }
 
   // ── FILTER POPOVER ──
