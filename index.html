@@ -1093,7 +1093,8 @@
     const dd = String(today.getDate()).padStart(2,'0');
     document.getElementById('dateMonth').value = mm;
     document.getElementById('dateYear').value = yyyy;
-    populateDays();
+    if(typeof populateDays === 'function') populateDays();
+    else window.populateDays && window.populateDays();
     document.getElementById('dateDay').value = dd;
     document.getElementById('noteInput').value = '';
     showScreen('addScreen');
@@ -1321,7 +1322,7 @@
     if(pv) pv.textContent = prefs.defaultPay || 'Cash'; 
   });
 
-  function populateDays() {
+  window.populateDays = function populateDays() {
     const day = document.getElementById('dateDay');
     if(!day) return;
     const month = document.getElementById('dateMonth').value;
@@ -1338,7 +1339,7 @@
     day.value = String(Math.min(current, max)).padStart(2,'0');
   }
   document.addEventListener('change', e => {
-    if(e.target.id==='dateMonth'||e.target.id==='dateYear') populateDays();
+    if(e.target.id==='dateMonth'||e.target.id==='dateYear') window.populateDays && window.populateDays();
   });
 
     // ── TOAST ──
