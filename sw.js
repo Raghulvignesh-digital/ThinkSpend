@@ -1,4 +1,4 @@
-const CACHE = 'thinkspend-v3';
+const CACHE = 'thinkspend-v4';
 
 self.addEventListener('install', e => {
   e.waitUntil(
