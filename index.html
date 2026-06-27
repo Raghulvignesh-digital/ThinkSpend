@@ -940,7 +940,7 @@
   function renderDashboard() {
     const txns = filterTransactions();
     const total = txns.reduce((s,t) => s + t.amount, 0);
-    document.getElementById('summaryAmount').textContent = formatCurrency(total);
+    document.getElementById('summaryAmount').textContent = '₹' + total.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 
     const periodLabels = {
       'Today':'Spent today','This Week':'Spent this week',
@@ -968,7 +968,7 @@
           <div class="txn-name">${escHtml(t.description)}</div>
           <div class="txn-date">${formatDate(t.date)} · ${escHtml(t.paymentMethod)}</div>
         </div>
-        <div class="txn-amount">${formatCurrency(t.amount)}</div>`;
+        <div class="txn-amount">₹${t.amount.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`;
       el.addEventListener('click', () => openEditMenu(t));
       list.appendChild(el);
     });
@@ -1157,29 +1157,6 @@
   function openSearch() { showToast('Search coming soon'); }
 
   // ── SETTINGS PREFERENCES ──
-  function getCurrencyConfig() {
-    const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
-    const currency = prefs.currency || 'INR';
-    const map = {
-      INR: {symbol:'₹', locale:'en-IN'},
-      USD: {symbol:'$', locale:'en-US'},
-      EUR: {symbol:'€', locale:'de-DE'},
-      GBP: {symbol:'£', locale:'en-GB'}
-    };
-    return map[currency] || map.INR;
-  }
-
-  function formatCurrency(amount) {
-    const cfg = getCurrencyConfig();
-    return cfg.symbol + Number(amount).toLocaleString(cfg.locale, {minimumFractionDigits:2, maximumFractionDigits:2});
-  }
-
-  function applyCurrencySettings() {
-    const cfg = getCurrencyConfig();
-    document.querySelectorAll('.currency-sym').forEach(el => el.textContent = cfg.symbol);
-    if(window.renderDashboard) renderDashboard();
-  }
-
   function selectPreference(type, value) {
     const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
     if(type === 'currency') {
@@ -1202,7 +1179,6 @@
     }
     localStorage.setItem('thinkspend_prefs', JSON.stringify(prefs));
     closeSubmenu(type);
-    applyCurrencySettings();
   }
 
   function loadSettingsPreferences() {
@@ -1217,7 +1193,6 @@
     }[currencyValue] || currencyValue;
     const weekStartEl = document.getElementById('settingsWeekStartValue');
     if(weekStartEl) weekStartEl.textContent = prefs.weekStart || 'Sunday';
-    applyCurrencySettings();
   }
 
   function openProfileEdit() {
@@ -1309,7 +1284,6 @@
 
     // Apply theme
     applyTheme(prefs.theme);
-    applyCurrencySettings();
 
     showToast('Profile saved ✓');
     closeProfileEdit();
@@ -1326,8 +1300,16 @@
     }
   }
 
+  function applyCurrencySettings() {
+    // No-op: currency remains fixed to INR for this version.
+  }
+
+  function formatCurrency(amount) {
+    return '₹' + Number(amount).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
   // Load saved avatar on startup
-  (function loadSavedAvatar() {
+  function loadSavedAvatar() {
     const saved = localStorage.getItem('thinkspend_avatar');
     if(saved) {
       const av = document.getElementById('settingsAvatar');
@@ -1341,12 +1323,17 @@
     }
     loadSettingsPreferences();
     applyCurrencySettings();
+  }
+
+  function formatDate(str) {
     const d = new Date(str+'T00:00:00');
     return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
   }
+
   function escHtml(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
 
   // Init
+  loadSavedAvatar();
   showScreen('dashScreen');
 </script>
  <script>
