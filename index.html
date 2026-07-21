@@ -258,15 +258,6 @@
 <div class="loader" id="loader">
   <div class="spinner"></div>
 </div>
-
- <!-- UPDATE BANNER -->
-<div class="update-banner" id="updateBanner">
-  <div class="update-banner-text">
-    <div class="update-banner-title">🚀 New Update Available</div>
-    <div class="update-banner-sub">Tap to get the latest features</div>
-  </div>
-  <button class="update-btn" onclick="applyUpdate()">Update</button>
-</div>
  
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -1506,40 +1497,13 @@
   loadSavedAvatar();
   showScreen('dashScreen');
 </script>
- <script>
-  // SERVICE WORKER + UPDATE CHECK
-  let newWorker;
-
+<script>
+  // SERVICE WORKER — network-first, updates apply automatically
   if('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(reg => {
-
-      // Check for updates every 60 seconds
-      setInterval(() => reg.update(), 60000);
-
-      reg.addEventListener('updatefound', () => {
-        newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if(newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New version available — show banner
-            document.getElementById('updateBanner').classList.add('show');
-          }
-        });
-      });
-    });
-
-    // When new SW takes over — reload page
+    navigator.serviceWorker.register('sw.js');
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.location.reload();
     });
-  }
-
-  function applyUpdate() {
-    document.getElementById('updateBanner').classList.remove('show');
-    if(newWorker) {
-      newWorker.postMessage({ action: 'skipWaiting' });
-    } else {
-      window.location.reload();
-    }
   }
 </script>
 </body>
