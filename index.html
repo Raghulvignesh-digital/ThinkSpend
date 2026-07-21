@@ -345,6 +345,14 @@
         </div>
         <svg class="popover-item-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
       </div>
+      <div class="popover-item" onclick="clearAllFilters()" style="cursor:pointer">
+        <div class="popover-item-icon">
+          <svg viewBox="0 0 24 24" style="stroke:var(--danger)"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+        <div class="popover-item-info">
+          <div class="popover-item-label" style="color:var(--danger)">Clear Filters</div>
+        </div>
+      </div>
     </div>
 
     <div class="section-title">Latest</div>
@@ -547,6 +555,18 @@
         <span>All Time</span>
         <svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
+      <div class="option-item" id="periodOpt_Custom" onclick="toggleCustomDateForm()"><span>Custom Range</span></div>
+    </div>
+    <div class="hidden" id="customDateForm" style="padding:16px;background:var(--surface);margin:16px 16px 0;border-radius:var(--radius);border:1px solid var(--border)">
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text3);font-weight:500">From</label>
+        <input type="date" id="customStartDate" style="width:100%;padding:10px;margin-top:4px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-family:var(--font);font-size:14px"/>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;color:var(--text3);font-weight:500">To</label>
+        <input type="date" id="customEndDate" style="width:100%;padding:10px;margin-top:4px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-family:var(--font);font-size:14px"/>
+      </div>
+      <button onclick="applyCustomDateRange()" style="width:100%;padding:12px;background:var(--accent);color:var(--accent-text);border:none;border-radius:10px;font-weight:700;font-family:var(--font);cursor:pointer;font-size:14px">Apply</button>
     </div>
   </div>
 
@@ -791,7 +811,7 @@
   let unsubscribe = null;
   let editingId = null;
 
-  const filters = { period: 'All Time', category: 'All', payment: 'All' };
+  const filters = { period: 'All Time', category: 'All', payment: 'All', customStart: null, customEnd: null };
 
   // ── CATEGORY ICONS ──
   const catIcons = {
@@ -929,6 +949,8 @@
         if(d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
       } else if(filters.period === 'This Year') {
         if(d.getFullYear() !== now.getFullYear()) return false;
+      } else if(filters.period === 'Custom' && filters.customStart && filters.customEnd) {
+        if(t.date < filters.customStart || t.date > filters.customEnd) return false;
       }
       if(filters.category !== 'All' && t.category !== filters.category) return false;
       if(filters.payment !== 'All' && t.paymentMethod !== filters.payment) return false;
@@ -987,6 +1009,28 @@
     } else if(filters.period === 'This Year') {
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       groups = months.map((m,i) => ({ label:m, val: txns.filter(t => new Date(t.date).getMonth()===i).reduce((s,t)=>s+t.amount,0) }));
+    } else if(filters.period === 'Custom' && filters.customStart && filters.customEnd) {
+      const start = new Date(filters.customStart+'T00:00:00');
+      const end = new Date(filters.customEnd+'T00:00:00');
+      const spanDays = Math.max(1, Math.round((end-start)/86400000) + 1);
+      if(spanDays <= 14) {
+        groups = [];
+        for(let i=0;i<spanDays;i++){
+          const d = new Date(start); d.setDate(start.getDate()+i);
+          const key = d.toISOString().slice(0,10);
+          groups.push({ label: d.getDate()+'/'+(d.getMonth()+1), val: txns.filter(t=>t.date===key).reduce((s,t)=>s+t.amount,0) });
+        }
+      } else {
+        const numWeeks = Math.min(8, Math.ceil(spanDays/7));
+        groups = [];
+        for(let i=0;i<numWeeks;i++){
+          const wStart = new Date(start); wStart.setDate(start.getDate()+i*7);
+          const wEnd = new Date(wStart); wEnd.setDate(wStart.getDate()+6);
+          const wStartKey = wStart.toISOString().slice(0,10);
+          const wEndKey = wEnd.toISOString().slice(0,10);
+          groups.push({ label:'W'+(i+1), val: txns.filter(t=>t.date>=wStartKey && t.date<=wEndKey).reduce((s,t)=>s+t.amount,0) });
+        }
+      }
     } else {
       const yearMap = {};
       txns.forEach(t => { const y=new Date(t.date).getFullYear(); yearMap[y]=(yearMap[y]||0)+t.amount; });
@@ -1141,6 +1185,52 @@
 
     closeSubmenu(type);
     if(window.renderDashboard) window.renderDashboard();
+  }
+
+  function clearAllFilters() {
+    const keyMap = { period:'periodOpt_', category:'catOpt_', payment:'payOpt_' };
+    const defaults = { period:'All Time', category:'All', payment:'All' };
+    Object.keys(defaults).forEach(type => {
+      const old = window.filters[type];
+      if(old !== defaults[type]) {
+        const oldEl = document.getElementById(keyMap[type]+old);
+        if(oldEl) { oldEl.classList.remove('selected'); oldEl.querySelector('svg')?.remove(); }
+        const newEl = document.getElementById(keyMap[type]+defaults[type]);
+        if(newEl) {
+          newEl.classList.add('selected');
+          if(!newEl.querySelector('svg')) newEl.innerHTML += '<svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+        }
+        window.filters[type] = defaults[type];
+      }
+    });
+    window.filters.customStart = null;
+    window.filters.customEnd = null;
+    document.getElementById('customStartDate').value = '';
+    document.getElementById('customEndDate').value = '';
+    document.getElementById('customDateForm').classList.add('hidden');
+    document.getElementById('periodVal').textContent = 'All Time';
+    document.getElementById('categoryVal').textContent = 'All';
+    document.getElementById('paymentVal').textContent = 'All';
+    document.getElementById('filterDot').style.display = 'none';
+    filterOpen = false;
+    document.getElementById('filterPopover').classList.add('hidden');
+    if(window.renderDashboard) window.renderDashboard();
+  }
+
+  function toggleCustomDateForm() {
+    document.getElementById('customDateForm').classList.toggle('hidden');
+  }
+
+  function applyCustomDateRange() {
+    const start = document.getElementById('customStartDate').value;
+    const end = document.getElementById('customEndDate').value;
+    if(!start || !end) { showToast('Select both dates'); return; }
+    if(start > end) { showToast('Start date must be before end date'); return; }
+    window.filters.customStart = start;
+    window.filters.customEnd = end;
+    selectFilter('period','Custom');
+    document.getElementById('periodVal').textContent = formatDate(start) + ' – ' + formatDate(end);
+    document.getElementById('customDateForm').classList.add('hidden');
   }
 
   // ── ACCOUNT SHEET ──
