@@ -80,6 +80,7 @@
   .popover-backdrop{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.1)}
   .popover{position:absolute;top:110px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-width:220px;z-index:100;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.12)}
   .popover.hidden{display:none}
+  .hidden{display:none}
   .popover-item{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s}
   .popover-item:last-child{border-bottom:none}
   .popover-item:active{background:var(--surface2)}
@@ -188,6 +189,16 @@
 
   /* TOAST */
   .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--accent-text);border-radius:24px;padding:10px 20px;font-size:13px;font-weight:500;z-index:500;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap}
+
+  /* BUDGET ALERT MODAL */
+  .budget-alert-backdrop{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s;pointer-events:none}
+  .budget-alert-backdrop.show{opacity:1;pointer-events:all}
+  .budget-alert-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-40%);width:calc(100% - 64px);max-width:340px;background:var(--surface);border-radius:20px;padding:28px 24px;z-index:260;text-align:center;opacity:0;pointer-events:none;transition:all 0.25s}
+  .budget-alert-modal.show{transform:translate(-50%,-50%);opacity:1;pointer-events:all}
+  .budget-alert-icon{font-size:36px;margin-bottom:12px}
+  .budget-alert-title{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--text)}
+  .budget-alert-msg{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:20px}
+  .budget-alert-btn{width:100%;padding:13px;background:var(--accent);color:var(--accent-text);border:none;border-radius:12px;font-weight:700;font-family:var(--font);cursor:pointer}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* LOADER */
@@ -259,6 +270,15 @@
  
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- BUDGET ALERT MODAL -->
+<div class="budget-alert-backdrop hidden" id="budgetAlertBackdrop" onclick="closeBudgetAlert()"></div>
+<div class="budget-alert-modal hidden" id="budgetAlertModal">
+  <div class="budget-alert-icon" id="budgetAlertIcon">⚠️</div>
+  <div class="budget-alert-title" id="budgetAlertTitle">Budget Alert</div>
+  <div class="budget-alert-msg" id="budgetAlertMsg"></div>
+  <button class="budget-alert-btn" onclick="closeBudgetAlert()">Got it</button>
+</div>
 
 <!-- OFFLINE BADGE -->
 <div class="offline-badge" id="offlineBadge">You're offline — changes saved locally</div>
@@ -919,6 +939,7 @@
         showToast('Transaction saved ✓');
       }
       closeAdd();
+      if(!editingId) setTimeout(() => { if(window.checkBudgetAlerts) window.checkBudgetAlerts(); }, 400);
     } catch(e) {
       showToast('Failed to save');
     }
@@ -1397,6 +1418,65 @@
   function formatCurrency(amount) {
     return '₹' + Number(amount).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
+
+  // ── BUDGET ALERTS ──
+  function playBudgetAlertSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(880, ctx.currentTime);
+      g.gain.setValueAtTime(0.15, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime + 0.4);
+    } catch(e) {}
+  }
+
+  function showBudgetAlert(icon, title, msg) {
+    document.getElementById('budgetAlertIcon').textContent = icon;
+    document.getElementById('budgetAlertTitle').textContent = title;
+    document.getElementById('budgetAlertMsg').textContent = msg;
+    document.getElementById('budgetAlertBackdrop').classList.remove('hidden');
+    document.getElementById('budgetAlertModal').classList.remove('hidden');
+    requestAnimationFrame(() => {
+      document.getElementById('budgetAlertBackdrop').classList.add('show');
+      document.getElementById('budgetAlertModal').classList.add('show');
+    });
+    playBudgetAlertSound();
+  }
+
+  function closeBudgetAlert() {
+    document.getElementById('budgetAlertBackdrop').classList.remove('show');
+    document.getElementById('budgetAlertModal').classList.remove('show');
+    setTimeout(() => {
+      document.getElementById('budgetAlertBackdrop').classList.add('hidden');
+      document.getElementById('budgetAlertModal').classList.add('hidden');
+    }, 250);
+  }
+
+  function checkBudgetAlerts() {
+    const prefs = JSON.parse(localStorage.getItem('thinkspend_prefs') || '{}');
+    if(prefs.budgetAlert === false) return;
+    const txns = window._allTransactions || [];
+    const now = new Date();
+
+    if(prefs.weeklyBudget > 0) {
+      const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate()-now.getDay()); startOfWeek.setHours(0,0,0,0);
+      const weekSpent = txns.filter(t => new Date(t.date) >= startOfWeek).reduce((s,t)=>s+t.amount,0);
+      const pct = weekSpent/prefs.weeklyBudget;
+      if(pct >= 1) { showBudgetAlert('🚨','Weekly Budget Exceeded', `You've spent ${formatCurrency(weekSpent)} of your ${formatCurrency(prefs.weeklyBudget)} weekly budget.`); return; }
+      if(pct >= 0.8) { showBudgetAlert('⚠️','Weekly Budget Alert', `You've used ${Math.round(pct*100)}% of your weekly budget (${formatCurrency(weekSpent)} of ${formatCurrency(prefs.weeklyBudget)}).`); return; }
+    }
+    if(prefs.monthlyBudget > 0) {
+      const monthSpent = txns.filter(t => { const d=new Date(t.date); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); }).reduce((s,t)=>s+t.amount,0);
+      const pct = monthSpent/prefs.monthlyBudget;
+      if(pct >= 1) { showBudgetAlert('🚨','Monthly Budget Exceeded', `You've spent ${formatCurrency(monthSpent)} of your ${formatCurrency(prefs.monthlyBudget)} monthly budget.`); return; }
+      if(pct >= 0.8) { showBudgetAlert('⚠️','Monthly Budget Alert', `You've used ${Math.round(pct*100)}% of your monthly budget (${formatCurrency(monthSpent)} of ${formatCurrency(prefs.monthlyBudget)}).`); }
+    }
+  }
+  window.checkBudgetAlerts = checkBudgetAlerts;
 
   // Load saved avatar on startup
   function loadSavedAvatar() {
