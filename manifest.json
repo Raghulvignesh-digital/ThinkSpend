@@ -7,12 +7,12 @@
   "theme_color": "#111111",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192/111111/ffffff?text=T",
+      "src": "https://i.ibb.co/Mx7gtr9k/Androidmost-launchers.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://via.placeholder.com/512x512/111111/ffffff?text=T",
+      "src": "https://i.ibb.co/6JP33MCk/splash-screens-and-app-switcher.png",
       "sizes": "512x512",
       "type": "image/png"
     }
