@@ -894,8 +894,14 @@
     );
     unsubscribe = onSnapshot(q, snap => {
       allTransactions = window._allTransactions = snap.docs
-        .map(d => ({id:d.id,...d.data()}))
-        .sort((a,b) => b.date.localeCompare(a.date));
+  .map(d => ({id:d.id,...d.data()}))
+  .sort((a,b) => {
+    const dateCompare = b.date.localeCompare(a.date);
+    if(dateCompare !== 0) return dateCompare;
+    const aTime = a.createdAt?.toMillis?.() || 0;
+    const bTime = b.createdAt?.toMillis?.() || 0;
+    return bTime - aTime;
+  });
       renderDashboard();
     }, err => {
       console.error(err);
