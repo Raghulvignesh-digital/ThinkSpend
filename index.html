@@ -1183,6 +1183,15 @@ try {
   }
   function cap(s){ return s[0].toUpperCase()+s.slice(1); }
 
+ let toastTimer;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
   function selectFilter(type, value) {
     const old = window.filters[type];
     const keyMap = { period:'periodOpt_', category:'catOpt_', payment:'payOpt_' };
